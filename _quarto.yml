@@ -1,0 +1,22 @@
+project:
+  type: book
+
+book:
+  title: "FEM - Solution to Mechanical Equilibrium and Special Elements Sections"
+  author: "Vítor Azevedo"
+  chapters:
+    - index.qmd
+    - theorical-cp4.qmd
+    - cp4-1.qmd
+
+
+engine: julia
+
+format:
+  typst:
+      toc: true
+      columns: 1
+      mainfont: "Libertinus Serif"
+
+
+

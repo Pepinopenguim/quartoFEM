@@ -1,0 +1,209 @@
+# Theorical Solutions
+
+```{=typst}
+// Define a 'sol' function for your answers
+#let sol(body) = text(fill: rgb("#1a237e"), body)
+
+
+== Exercise 4.1.1
+
+In which cases the strain tensor is symmetric?
+
+#sol[
+  The strain tensor is symmetric in all cases where the small displacement 
+  assumption holds, as it is defined as the symmetric part of the 
+  displacement gradient.
+]
+
+== Exercise 4.1.2
+
+Why is the stress tensor always symmetric?
+
+#sol[
+  asdf
+]
+
+== Exercise 4.1.3
+
+Why does the classical finite element formulation assume small deformations?
+
+#sol[
+  asdf
+]
+
+== Exercise 4.1.4
+
+Give examples of typical structures corresponding to each stress state: plane stress, plane strain, and axisymmetric conditions. Provide at least three examples for each case.
+
+#sol[
+  asdf
+]
+
+== Exercise 4.2.1
+
+Explain the role of the strain-displacement matrix $𝑩$ in a finite element formulation.
+
+#sol[
+  asdf
+]
+
+== Exercise 4.3.1
+
+What is an equivalent nodal-load vector, and why is it needed in the finite element method?
+
+#sol[
+  asdf
+]
+
+== Exercise 4.3.2
+
+Explain the difference between an externally applied nodal force and a consistent equivalent nodal load obtained from a distributed action.
+
+#sol[
+  asdf
+]
+
+== Exercise 4.3.3
+
+How do body forces and surface tractions enter the weak form and the element load vector?
+
+#sol[
+  asdf
+]
+
+== Exercise 4.4.1
+
+What is full and reduced integration in the computation of the stiffness matrix?
+
+#sol[
+  asdf
+]
+
+== Exercise 4.4.2
+
+What are the connectivity and location vectors of an element, and how are they used in the assembly process?
+
+#sol[
+  asdf
+]
+
+== Exercise 4.4.3
+
+What is the equilibrium residual, and why must it vanish only at free degrees of freedom?
+
+#sol[
+  asdf
+]
+
+== Exercise 4.4.4
+
+How are support reactions recovered after the displacement field has been computed?
+
+#sol[
+  asdf
+]
+
+== Exercise 4.5.1
+
+Explain the origin of shear locking and volumetric locking, and indicate in which types of problems each one is most likely to appear.
+
+#sol[
+  asdf
+]
+
+== Exercise 4.5.2
+
+Why can reduced integration alleviate locking, and what numerical risk does it introduce?
+
+#sol[
+  asdf
+]
+
+== Exercise 4.5.3
+
+What are hourglass modes, and why are they associated with underintegrated elements?
+
+#sol[
+  asdf
+]
+
+== Exercise 4.5.4
+
+Why can element distortion degrade accuracy even when the interpolation order is unchanged?
+
+#sol[
+  asdf
+]
+
+== Exercise 4.5.5
+
+What is meant by ill-conditioning of the stiffness matrix, and how can it affect the numerical solution?
+
+#sol[
+  asdf
+]
+
+== Exercise 4.5.6
+
+Distinguish between an ill-conditioned stiffness matrix and a singular stiffness matrix.
+
+#sol[
+  asdf
+]
+
+== Exercise 4.5.7
+
+Give four common modeling or formulation errors that can lead to a singular stiffness matrix.
+
+#sol[
+  asdf
+]
+
+== Exercise 4.5.8
+
+Why may excessively large penalty parameters create numerical difficulties even though they enforce constraints more strongly?
+
+#sol[
+  asdf
+]
+
+== Exercise 4.6.1
+
+List five use-cases of multifreedom constraints in finite-element modeling.
+
+#sol[
+  asdf
+]
+
+== Exercise 4.6.2
+
+Compare master-slave elimination, the penalty method, and the Lagrange multiplier method for enforcing constraints. State one advantage and one drawback of each.
+
+#sol[
+  asdf
+]
+
+== Exercise 5.1.1
+
+List four applications for each of the following element types: plate, membrane, shell, and interface.
+
+#sol[
+  asdf
+]
+
+== Exercise 5.1.3
+
+Simplify the 3D formulation for isoparametric beam elements in order to derive the formulation for an isoparametric 2D beam element.
+
+#sol[
+  asdf
+]
+
+== Exercise 5.1.4
+
+Derive the formulation for a 2D interface element.
+
+#sol[
+  asdf
+]
+```

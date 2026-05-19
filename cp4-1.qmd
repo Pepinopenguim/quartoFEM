@@ -1,0 +1,363 @@
+# Exercise 4.1.5
+
+```{=typst}
+//useful functions for all solutions
+
+
+#let array2mat(data, delim:"[", digits:4) = {
+  let rounded-data = data.map(
+    row => row.map(
+      value => calc.round(value, digits: digits)
+    )
+  )
+
+  math.mat(..rounded-data, delim:delim)
+}
+
+#let scalar_matrix_mult(scalar, matrix) = {
+  matrix.map(
+    row => row.map(
+      v => v * scalar
+    )
+  )
+}
+
+#let r4(v) = {
+  calc.round(v, digits: 4)
+}
+
+#let bmat(..args) = math.mat(..args, delim: "[")
+
+
+```
+
+```{=typst}
+
+A flat metallic plate with length 100 mm, width 40 mm, and thickness 5 mm is subjected to a uniform tensile load. When the axial force was measured as 20 kN the axial elongation was 0.1 mm and in-plane lateral contraction 0.008 mm. Determine the corresponding constitutive matrix *D* for a plane stress 2D linear elastic model.
+
+== Solution
+
+#set math.equation(numbering: n => [(4.1.5.#n)], supplement: none)
+
+#let L = 100 / 1000 // m
+#let width = 40 / 1000 // m
+#let thicc = 5 / 1000 // m
+#let F = 20e3 // N
+#let d_axial = 0.1e-3 // m
+#let d_lateral = -0.008e-3 // m
+
+
+Firstly, we need to calculate the tensions
+#let axial_area = width * thicc
+#let sigma_x = F / axial_area
+$ sigma_x = F / A = (#F "N") / (#axial_area "m"^2) =  #(sigma_x * 0.000001) "MPa" $
+
+#let epsilon_x = d_axial / L
+
+$ epsilon_x = (Delta L) / (L) = (#d_axial "m") / (#L "m") = #epsilon_x "m/m" $
+
+It is known that $E = sigma / epsilon$, so:
+
+#let E = sigma_x / epsilon_x 
+
+$ E = #sigma_x / #epsilon_x = #E "Pa" = #(E * 1e-9) "GPa" $
+
+#let epsilon_y = d_lateral / width
+
+Similarly
+#let poisson = -(epsilon_y / epsilon_x)
+
+$ epsilon_y = (Delta W) / (W) = (#d_lateral) / (#width) = #calc.round( epsilon_y, digits: 4) $
+
+$ nu = - epsilon_y / epsilon_x = #calc.round(epsilon_y, digits: 4) / #epsilon_x = #calc.round(poisson, digits:4) $
+
+The constitutive Matrix is then defined by
+
+$ bold(D) = E / (1 - nu^2) dot mat(1, nu, 0; nu, 1, 0; 0, 0, (1-nu)/2) $
+
+so
+$ bold(D) = #E / (1 - (#calc.round(poisson, digits: 4))^2)
+
+dot
+
+mat(delim: "[",
+1, #calc.round(poisson, digits:4), 0;
+#calc.round(poisson, digits:4), 1, 0;
+0, 0, (1 - (#calc.round(poisson, digits:4))) / (2)
+
+) $
+
+#let mult = E / (1 - poisson * poisson)
+#let m = (
+  (1, poisson, 0),
+  (poisson, 1, 0),
+  (0, 0, (1 - poisson) / 2)
+)
+#let array2mat(data, delim:"[", digits:4) = {
+  let rounded-data = data.map(
+    row => row.map(
+      value => calc.round(value, digits: digits)
+    )
+  )
+
+  math.mat(..rounded-data, delim:delim)
+}
+
+#let r4(v) = {
+  calc.round(v, digits: 4)
+}
+
+$ bold(D) = #r4(mult * 1e-9)"GPa" dot #array2mat(m) $
+
+$ bold(D) = #array2mat(m.map(row => row.map(v => v * mult * 1e-9))) "GPa" $
+
+```
+---
+
+
+# Exercise 4.1.6
+
+```{=typst}
+
+
+#set math.equation(numbering: n => [(4.1.6.#n)], supplement: none)
+
+A cylindrical concrete sample with height 20 cm and diameter 10 cm is tested in uniaxial compression. At a point within the elastic range, the measured values are: axial stress 20 MPa, axial shortening 0.2 mm, and radial expansion 0.015 mm. Using these measurements, determine the elastic parameters E and ν, and construct the corresponding constitutive matrix 𝑫 for a plane stress linear #footnote[I've read the problem incorrectly and done also the axissimetrical development, oops!] elastic model. 
+
+
+
+
+== Solution
+
+#let height_cm = 20
+#let diameter_cm = 10
+#let sigma_z_MPa = 20
+#let delta_z_mm = -.2 // compression so negative
+#let delta_r_mm = .015 
+
+// Determine E and v
+
+Firstly, we need to define Young's module:
+
+$ E = sigma / epsilon $ <a1>
+
+$ epsilon = (Delta L) / L $ <a2>
+
+Substituting @a2 in @a1, we get
+
+#let E_MPa = sigma_z_MPa * height_cm / (calc.abs(delta_z_mm / 10))
+
+$ E = (sigma dot L) / (Delta L) = (#sigma_z_MPa "MPa" dot #height_cm "cm") / (#calc.abs(delta_z_mm / 10)  "cm") = #(E_MPa * 1e-3) "GPa" $
+
+Now, we may obtain epsilon in relation to the radius:
+#let epsilon_r = (delta_r_mm * 1e-3) / (diameter_cm / 2 * 1e-2)
+
+#let epsilon_z = (delta_z_mm * 1e-3) / (height_cm * 1e-2)
+
+$ epsilon_z = (Delta L) / L = #epsilon_z "m/m" $
+
+
+$ epsilon_r = (Delta r) / (r) =  #epsilon_r "m/m" $
+
+Defining Poisson:
+#let poisson = -(epsilon_r / epsilon_z)
+
+$ nu = - epsilon_r / epsilon_z = #poisson $
+
+Firstly, let's analyse the constitutive matrix for an axissimetrical element, defined as
+
+$ bmat(sigma_"rr";sigma_"zz";sigma_(theta theta); tau_(r z)) 
+=
+bold(D)
+dot
+bmat(epsilon_"rr";epsilon_"zz";epsilon_(theta theta); gamma_(r z))
+$
+
+Where *D* is defined by
+
+$
+bold(D) =
+E / ((1 + nu)(1 - 2nu))
+dot
+bmat(
+  1-nu, nu, nu, 0;
+  nu, 1-nu, nu, 0;
+  nu, nu, 1-nu, 0;
+  0, 0, 0, (1-2nu)/2
+)
+$
+
+#let mult_MPa = E_MPa / ((1 + poisson)*(1 - 2 * poisson)) 
+#let get_m(nu) = {
+  (
+    (1-nu, nu, nu, 0),
+    (nu, 1-nu, nu, 0),
+    (nu, nu, 1-nu, 0),
+    (0, 0, 0, (1-2*nu)/2)
+  )
+}
+
+$
+  bold(D)
+  =
+  #r4(mult_MPa) "MPa"
+  dot
+  #array2mat(get_m(poisson))
+$
+
+$
+  =
+  #array2mat(digits:1,
+    get_m(poisson).map(
+      row => row.map(
+        v => v * mult_MPa
+      )
+    )
+  ) "MPa"
+$
+
+Finally, to define the same element in a plane stress linear elastic model:
+
+$
+  bold(D) =
+  E / (1 - nu^2)
+  mat(
+    1, nu, 0;
+    nu, 1, 0;
+    0, 0, (1 - nu) / 2
+  )
+$
+
+#let plane_stress(nu) = {
+  (
+    (1, nu, 0),
+    (nu, 1, 0),
+    (0, 0, (1-nu)/2),
+  )
+}
+
+$
+  bold(D) = 
+  (#E_MPa "MPa") / (1 - #(poisson)^2) dot
+  #array2mat(
+    plane_stress(poisson)
+  )
+$
+
+#let mult_plane_stress_MPa = E_MPa / (1 - poisson * poisson)
+
+$
+  bold(D) = 
+  #array2mat(
+    plane_stress(poisson).map(
+      row => row.map(
+        value => value * mult_plane_stress_MPa / 10000
+      )
+    )
+  )
+  dot 10^4
+  "MPa"
+$
+
+
+```
+
+---
+
+# Exercise 4.1.7
+
+```{=typst}
+
+
+A long thick-walled cylindrical pipe with inner radius 𝑎 = 50 mm and outer radius 𝑏 = 100 mm is subjected to a uniform internal pressure 𝑝 = 10 MPa. The material is linear elastic and isotropic, with Young’s modulus 𝐸 = 200 GPa and Poisson’s ratio 𝜈 = 0.2. Assume that the pipe is sufficiently long so that the axial strain can be neglected, i.e. 𝜀𝑧 = 0. At a point located at 𝑟 = 75 mm within the wall, the stress state is characterized by normal stresses only, with no shear components. Determine the stress components at this point and the corresponding strain components.
+
+== Solution
+
+#set math.equation(numbering: n => [(4.1.7.#n)], supplement: none)
+
+Since the internal pressure acts in the radial direction, and assuming axial strength can be neglected, it is valid to assume that the problem constitutes an Axisymmetric Stress, defined by
+
+$
+  bold(sigma) =
+  bmat(
+    sigma_(r r), 0, sigma_(r z);
+    0, sigma_(theta theta), 0;
+    sigma_(z r), 0, sigma_(z z)
+  )
+$
+
+It is known, for the current material, that
+
+#let poisson = .2
+#let E_MPa = 200
+
+$ nu = 0.2 $
+
+$ E = 200 "MPa" $
+
+Thus, for the Axisymmetric condition:
+
+
+$ bmat(sigma_"rr";sigma_"zz";sigma_(theta theta); tau_(r z)) 
+=
+bold(D)
+dot
+bmat(epsilon_"rr";epsilon_"zz";epsilon_(theta theta); gamma_(r z))
+$
+
+But, since axial strain can be neglected, that is, $epsilon_(z z) = 0$, we can define it as
+
+
+$ bmat(sigma_"rr";sigma_(theta theta); tau_(r z)) 
+=
+bold(D)
+dot
+bmat(epsilon_"rr";epsilon_(theta theta); gamma_(r z))
+$
+
+Where $bold(D)$, in this specific case, will be
+
+#let axyssimetrical_matrix(nu) = {
+  (
+    (1-nu, nu, 0),
+    (nu, 1-nu, 0),
+    (0, 0, (1-2*nu)/2)
+  )
+}
+
+$
+bold(D) =
+E / ((1 + nu)(1 - 2nu))
+dot
+bmat(
+  1-nu, nu, 0;
+  nu, 1-nu, 0;
+  0, 0, (1-2nu)/2
+)
+$
+
+#let axys = axyssimetrical_matrix(poisson)
+
+$
+  bold(D) =
+  #E_MPa / ((1 + #poisson)(1 - #(2*poisson))) dot
+  #array2mat(
+    axys
+  )
+$
+
+#let mult_axy_MPa = E_MPa / (1 + poisson) / (1 - 2* poisson)
+
+#let D_mat_MPa = scalar_matrix_mult(mult_axy_MPa, axys)
+
+$
+  bold(D) =
+  #array2mat(D_mat_MPa) "MPa"
+$ 
+
+With the defined matrix:#footnote[This problem is incomplete]
+
+
+
+
+```
