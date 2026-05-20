@@ -85,25 +85,9 @@
 // ====================================================================================================
 
 
-#set math.equation(numbering: n => [(4.2.2.#n)], supplement: none)
+#set math.equation(numbering: n => [(4.3.6.#n)], supplement: none)
 
-Build the matrix $B$ for a three-node bar element with nodal coordinates $x_1$, $x_2$, and $x_3$.
+The nodal coordinates of a 3-node bar element are $(x_1, y_1) = (-1, -1)$, $(x_2, y_2) = (1, 1)$, and $(x_3, y_3) = (0, 1)$. If the unit weight is $gamma = 70 "kN/m"^3$ and the area is $A = 0.02 "m"^2$, calculate the equivalent nodal forces due to the element weight using numerical integration.
 
 == Solution
-
-It is known that
-
-$
-  u = sum_(i=1)^3 N_i (xi) x_i = 
-   bold(X)^T bold(N)
-$
-
-
-$
-  (d u) / (d x) = bold(X)^T (d bold(N)) / (d x)
-$
-
-$
- (d bold(N)) / (d x) = (d bold(N)) / (d xi) dot J^(-1)
- 
-$
+placeholder

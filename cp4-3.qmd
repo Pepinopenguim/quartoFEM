@@ -1,0 +1,300 @@
+# Exercise 4.3.4
+
+```{=typst}
+
+#set math.equation(numbering: n => [(4.3.4.#n)], supplement: none)
+
+For the elements below, determine the nodal forces equivalent to body forces. Consider the element area $A$, thickness $t$, and unit weight $gamma$.
+
+#figure(image("p434.png", width:80%), caption: [4-node (a) and 8-node (b) Square Elements])
+
+== Solution
+
+The equivalent vertical nodal-force vector is
+$
+bold(F)_v = t integral_(A') bold(N)^T b_v J d eta d xi 
+$
+
+Since the Area is A, the Jacobian will be 
+
+$
+  J = (A)/(4)
+$
+
+=== (a)
+
+The shape function for a 4-node square element will be
+
+$
+  N_i = 1/4(1 + xi_i xi)(1 + eta_i eta)
+$
+
+Thus
+
+$
+  bold(F)_v = - (gamma t A)/16 integral_(-1)^(1) integral_(-1)^(1) mat(
+    (1 - xi)(1 - eta);
+    (1 + xi)(1 - eta);
+    (1 + xi)(1 + eta);
+    (1 - xi)(1 + eta);
+  )
+  d xi
+  d eta
+$
+
+Note that
+
+$
+  integral_(-1)^1 (1 plus.minus x) d x = 2
+$
+
+$
+  bold(F)_v = - (gamma t A)/16
+  mat(
+    4;4;4;4
+  )
+  =
+  - (gamma t A)/4
+  mat(
+    1;1;1;1
+  )
+$
+
+=== (b)
+
+
+Similarly, for the 8-node element,
+
+
+
+$
+  bold(F)_v = - (gamma t A) / 4
+  integral_(A')
+  bold(N)^T d eta d xi
+$
+
+
+$
+  bold(N)^T = mat(
+    N_1; N_2; N_3; N_4; N_5; N_6; N_7; N_8
+  ) = mat(
+    1/4 (1 - xi)(1 - eta)(-1 - xi - eta);
+    1/4 (1 + xi)(1 - eta)(-1 + xi - eta);
+    1/4 (1 + xi)(1 + eta)(-1 + xi + eta);
+    1/4 (1 - xi)(1 + eta)(-1 - xi + eta);
+    1/2 (1 - eta)(1 - xi^2);
+    1/2 (1 + xi)(1 - eta^2);
+    1/2 (1 + eta)(1 - xi^2);
+    1/2 (1 - xi)(1 - eta^2)
+  )
+$
+
+Solving it in julia, we obtain
+
+```
+
+```{julia}
+
+using LinearAlgebra
+
+function Nvector(xi, eta)
+    return [
+        1/4 * (1 - xi) * (1 - eta) * (-1 - xi - eta);
+        1/4 * (1 + xi) * (1 - eta) * (-1 + xi - eta);
+        1/4 * (1 + xi) * (1 + eta) * (-1 + xi + eta);
+        1/4 * (1 - xi) * (1 + eta) * (-1 - xi + eta);
+        1/2 * (1 - eta) * (1 - xi ^2);
+        1/2 * (1 + xi) * (1 - eta^2);
+        1/2 * (1 + eta) * (1 - xi ^2);
+        1/2 * (1 - xi) * (1 - eta^2);
+    ]
+end
+
+quad_2 = [
+    (-1 / sqrt(3), 1.0),
+    ( 1 / sqrt(3), 1.0)
+]
+function obtain_integral(Nvector)
+    # Initialize result based on the actual length of the vector (8 elements)
+    result = zeros(length(Nvector(0.0, 0.0)))
+
+    
+
+    for i in eachindex(result)
+        integral = 0.0
+        for (xi, wi) in quad_2
+            for (eta, wj) in quad_2
+                # Correctly indexing the i-th shape function
+                integral += Nvector(xi, eta)[i] * wi * wj
+            end
+        end
+        result[i] = integral
+    end
+
+    return result
+end
+
+
+display(obtain_integral(Nvector))
+
+```
+
+```{=typst}
+
+#let n = (
+  (-0.333333333333333,-0.3333333333333331,-0.3333333333333331,-0.3333333333333331, 1.333333333333333, 1.333333333333333, 1.333333333333333,1.3333333333333328,),
+)
+
+$
+  integral_(A') bold(N)^T d xi d eta = #array2mat(n)
+$
+
+Finally
+
+$
+  bold(F)_v = (gamma t A) / 12 #array2mat(
+    n.map(row => row.map(
+      i => i * (-1) * 3
+    ))
+  )
+$
+
+
+```
+
+
+
+# Exercise 4.3.5
+
+```{=typst}
+
+
+#set math.equation(numbering: n => [(4.3.5.#n)], supplement: none)
+
+Determine the equivalent nodal forces corresponding to the distributed load per unit length $q$.
+
+#figure(image("p435.png", width:80%), caption: [distributed vertical load $q$ applied to a 4-node (a) and 8-node (b) square element])
+
+== Solution
+
+=== (a) 
+
+For a distributed load $q$ acting on an element edge, the equivalent nodal forces are obtained by integrating the traction over the 1D boundary (the edge) rather than the 2D area:
+
+$
+  bold(F)_t = integral_L bold(N)^T bold(t) d L = integral_(-1)^(1) bold(N)^T bold(t) J d xi
+$
+
+The load is a vertical traction per unit length, so the traction vector is simply $bold(t) = mat(0; -q)$.
+
+Since the integration is along a 1D edge of length $L$, the corresponding line Jacobian is:
+$
+  J = L/2
+$
+
+Assuming the load is applied to the top edge connecting nodes 4 and 3, we evaluate the shape functions at $eta = 1$. The relevant 2D shape functions simplify to 1D linear shape functions along $xi$:
+$
+  N_4 (xi, 1) = 1/2 (1 - xi) \
+  N_3 (xi, 1) = 1/2 (1 + xi)
+$
+
+The vertical nodal forces for these two nodes are evaluated as:
+
+$
+  mat(F_(4y); F_(3y)) = integral_(-1)^(1) mat(N_4; N_3) (-q) (L/2) d xi
+$
+
+$
+  mat(F_(4y); F_(3y)) = -(q L)/2 integral_(-1)^(1) mat(1/2 (1 - xi); 1/2 (1 + xi)) d xi
+$
+
+Because the integral of each 1D linear shape function from $-1$ to $1$ evaluates exactly to $1$, we obtain the vertical equivalent forces:
+
+$
+  mat(F_(4y); F_(3y)) = (q L)/2 mat(-1; -1)
+$
+
+=== (b)
+
+For the same distributed load q acting now on an 8-node element, the shape functions are that of a 8-node square element, evaluated at $eta = 1$
+
+
+$
+  bold(N)^T = mat(
+    N_3; N_4; N_7
+  ) = mat(
+    xi/2 (xi + 1);
+    xi/2 (xi - 1);
+    1 - xi^2;
+  )
+$
+
+$
+  mat(F_(4y); F_(7y); F_(3y)) = integral_(-1)^(1) mat(N_4; N_7; N_3) (-q) (L/2) d xi
+  =\
+  -(q L)/2 integral_(-1)^1
+  mat(
+    xi/2 (xi + 1);
+    xi/2 (xi - 1);
+    1 - xi^2;
+  ) d xi
+$
+
+This equates to 
+
+$
+  mat(F_(4y); F_(7y); F_(3y)) = 
+  -(q L)/6 mat(1;4;1) 
+$
+
+
+```
+
+# Exercise 4.3.6
+
+```{=typst}
+
+```
+
+# Exercise 4.3.7
+
+```{=typst}
+
+#set math.equation(numbering: n => [(4.3.7.#n)], supplement: none)
+
+Find the nodal forces corresponding to horizontal and normal tractions with $q = 1 "kN/m"$ as shown below. Assume the element thickness is $h = 1 "m"$. The coordinates matrix is:
+
+$
+bold(X) =
+mat(
+  0, 0;
+  4, 0;
+  4, 4;
+  0, 4;
+  2, 0;
+  3, 2;
+  2, 4;
+  0, 2
+) "m"
+$
+
+== Solution
+placeholder
+
+```
+
+# Exercise 4.3.8
+
+```{=typst}
+
+#set math.equation(numbering: n => [(4.3.8.#n)], supplement: none)
+
+For the element below, determine the corresponding nodal forces if a normal traction $t_n = 1 "kPa"$ is applied on the shaded face.
+
+== Solution
+
+
+=== (a)
+
+
+```

@@ -9,6 +9,7 @@ book:
     - theorical-cp4.qmd
     - cp4-1.qmd
     - cp4-2.qmd
+    - cp4-3.qmd
 
 
 engine: julia
