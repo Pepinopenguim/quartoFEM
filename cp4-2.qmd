@@ -4,115 +4,6 @@
 ```{=typst}
 
 
-#set math.equation(numbering: n => [(4.2.2.#n)], supplement: none)
-
-Build the matrix $B$ for a three-node bar element with nodal coordinates $(x_1, y_1)$, $(x_2, y_2)$, and $(x_3, y_3)$.
-
-== Solution
-
-We can estimate the displacement with the use of shape functions:
-
-$
-  bold(u)(x,y,z) approx bold(N)(x,y,z)bold(U)^((e))
-$
-
-Where $bold(U)^((e))$ is a collection of the displacement degrees of freedom.
-
-Analysing a single node in its x displacement, it is true that
-
-$
-  u_x(x,y,z) = sum_(i=1)^n N_(i(x,y,z)) u_(i x) 
-$
-
-Deriving in relation to x:
-
-$
-  epsilon_(x x) = (partial u_x) / (partial x) = sum_(i=1)^(n) (partial N_i) / (partial x) u_(i x)
-$
-
-Thus, the $bold(B)$ matrix represents an element to generalize the relation between the strain vector and displacement matrix:
-
-$
-  bmat(
-    epsilon_(x x);
-    epsilon_(y y);
-    gamma_(x y);
-  )
-  =
-  bold(B) dot
-  bmat(
-    u_(1x);
-    u_(1y);
-    u_(2x);
-    u_(2y);
-    dots.v;
-    u_(n x);
-    u_(n y)
-  )
-$ 
-
-which is simply $bold(epsilon) = bold(B) bold(U)^((e))$. $bold(B)$ on itself can be represented as a union of matrixes:
-
-$
-  bold(B)
-  =
-  mat(bold(B)_1, bold(B)_2, bold(B)_3, bold(B)_4, bold(B)_5, dots.h, bold(B)_n)
-$
-
-Since our element can only suffer strain from compression/traction - that is, we assume it to be that of a truss, our equilibrium will be
-
- $ epsilon_(s s) = bold(B) bold(U)^((e)) = bmat(bold(B)_1, bold(B)_2, bold(B)_3) bmat(u_(1x); u_(1y); u_(2x); u_(2y); u_(3x); u_(3y)) $
-
-Where
-
-$
-  bold(B)_i = mat((partial N_i) / (partial x), (partial N_i) / (partial y))
-$
-
-To define $bold(B)_i$, we can start from the strain definition
-
-$
-  epsilon_(s s) = (partial u_s) / (partial s)
-$
-
-We know that, via the chain rule
-
-$
-  (partial N_i) / (partial s) = (d N_i) / (d xi) dot (d xi) / (d s)
-$ <partial>
-
-$
-  J = ||bold(J)|| = ||mat((d x) / (d xi), (d y) / (d xi))^T|| = sqrt(((d x) / (d xi))^2+((d y) / (d xi))^2) = (d s) / (d xi)
-$
-Hence
-$
-  1 / J = (d xi) / (d s)
-$ <subto>
-
-Substituting #ref(<subto>) into #ref(<partial>)  we get
-
-$
-  (partial N_i) / (partial s) = 1 / J (d N_i) / (d xi) 
-$
-$
-  bold(B)_i = mat((partial N_i) / (partial x), (partial N_i) / (partial y))
-  =
-  mat(
-    (partial N_i) / (partial s) (partial x) / (partial xi) (partial xi) / (partial s),
-    (partial N_i) / (partial s) (partial y) / (partial xi) (partial xi) / (partial s),
-  )
-  =
-  (partial N_i) / (partial s) (partial xi) / (partial s) mat((partial x) / (partial xi), (partial y) / (partial xi))
-
-$
-
-Which finally equates to
-
-$
-  bold(B)_i = 1 / (J^2) (d N_i) / (d xi) mat((partial x) / (partial xi), (partial y) / (partial xi))
-$
-
-
 
 ```
 
@@ -321,7 +212,7 @@ Thus, finally:
 
 $
   bold(B) =
-  1 / 2A
+  1 / (2A)
   dot
   mat(
     y_23, 0, y_31, 0, y_12, 0;
@@ -414,31 +305,237 @@ The strain vector for a two dimensional element, which can suffer strains in xx 
 
 
 $
-  bmat(
-    epsilon_(x x);
-    epsilon_(y y);
-    gamma_(x y);
-  )
+  bold(epsilon)
   =
   mat(bold(B)_1, bold(B)_2, bold(B)_3, bold(B)_4)
   dot
-  bmat(
-    u_(1x);
-    u_(1y);
-    u_(2x);
-    u_(2y);
-    u_(3x);
-    u_(3y);
-    u_(4x);
-    u_(4y);
+  bold(U)^(e)
+$ <424AA>
+
+Since we already know $bold(U)^e$, we just have to use $bold(C)$ to define $bold(B)_i$:
+
+$
+  bold(B)_i
+  =
+  mat(
+    (partial N_i)/(partial x), 0;
+    0, (partial N_i)/(partial y);
+    (partial N_i)/(partial y), (partial N_i)/(partial x)
   )
 $
 
-To better solve this problem, we can use Julia
+
+
+$
+  (partial bold(N)_i)/(partial bold(x)) = (partial bold(N)_i) / (partial bold(xi)) bold(J)^(-1)  
+$
+
+#import "@preview/numty:0.1.0" as nt
+
+#let C = (
+  (0, 0),
+  (4, 2),
+  (4, 4),
+  (0, 2),
+)
+
+#let U = (
+  (0),
+  (0),
+  (0.01),
+  (0.01),
+  (0.015),
+  (0.015),
+  (0),
+  (0.015),
+)
 
 
 
+#let N(node, xi, eta) = 0.25 * (node.at(0) - xi) * (node.at(1) - eta)
 
+#let N-derivs(xi, eta) = (
+  (
+    0.25 * (-1.0 + eta),
+    0.25 * (-1.0 + xi),
+  ),
+  (
+    0.25 * (+1.0 - eta),
+    0.25 * (-1.0 - xi),
+  ),
+  (
+    0.25 * (+1.0 + eta),
+    0.25 * (+1.0 + xi),
+  ),
+  (
+    0.25 * (-1.0 - eta),
+    0.25 * (+1.0 - xi),
+  ),
+)
+#let xi_value = -calc.sqrt(1 / 3)
+#let eta_value = calc.sqrt(1 / 3)
+For $(xi, eta) = (-sqrt(3)/3, sqrt(3)/3)$, we have:
+
+$
+  (partial bold(N))/(partial bold(xi))
+  =
+  #array2mat(
+    N-derivs(xi_value, eta_value)
+  )
+$ <424A>
+
+#let Jacobian(C, xi, eta) = {
+  let dNdXi = N-derivs(xi, eta)
+  nt.matmul(nt.transpose(C), dNdXi)
+}
+
+#let hcat(A, B) = {
+  let rows = A.len()
+
+  return (
+    ..range(rows).map(i =>
+      A.at(i) + B.at(i)
+    )
+  )
+  
+}
+
+And the Jacobian is:
+
+#let J = Jacobian(C, xi_value, eta_value)
+
+$
+  bold(J) = #array2mat(J)
+$
+
+Thus its inverse is:
+
+$
+  bold(J)^(-1) = #array2mat(
+    inv2(J)
+  )
+$ <424B>
+
+With #ref(<424A>) and #ref(<424B>) defined, it is simple to obtain the $bold(B)$:
+
+#let B(C, xi, eta) = {
+  let dNdx = {
+    nt.matmul(
+      N-derivs(xi, eta),
+      inv2(Jacobian(C, xi, eta)),
+    )}
+
+  let result = none
+
+  for i in range(dNdx.len()) {
+    let row = dNdx.at(i)
+
+    let dx = row.at(0)
+    let dy = row.at(1)
+
+    let Bi = (
+      (dx, 0),
+      (0, dy),
+      (dy, dx),
+    )
+
+    result = if result == none {
+      Bi
+    } else {
+      hcat(result, Bi)
+    }
+  }
+
+  return result
+}
+
+#let B = B(C, xi_value, eta_value)
+
+$
+  bold(B) = #array2mat(B)
+$
+
+Substituting this into #ref(<424AA>), with the use of Julia, we obtain the resultant $epsilon$ matrix:
+
+
+```
+
+```{julia}
+using LinearAlgebra
+
+C = [
+    0 0;
+    4 2;
+    4 4;
+    0 2;
+]
+
+U = [
+    0;
+    0;
+    0.01;
+    0.01;
+    0.015;
+    0.015;
+    0;
+    0.015;
+]
+
+
+function N_derivs(xi, eta)
+    return [
+        0.25*(-1.0 + eta)  0.25*(-1.0 + xi)
+        0.25*(+1.0 - eta)  0.25*(-1.0 - xi)
+        0.25*(+1.0 + eta)  0.25*(+1.0 + xi)
+        0.25*(-1.0 - eta)  0.25*(+1.0 - xi)
+    ]
+end
+
+function Jacobian(C, xi, eta)
+    # Get the 4x2 matrix of shape function derivatives
+    dNdξ = N_derivs(xi, eta)
+    
+    return C' * dNdξ
+end
+
+function getB(C, xi, eta)
+    dNdx = N_derivs(xi, eta) * inv(Jacobian(C, xi, eta))
+    B = nothing
+    for row in eachrow(dNdx)
+        dx, dy = row
+        Bi = [
+            dx 0;
+            0 dy;
+            dy dx;
+        ]
+        if B === nothing
+            B = Bi
+        else
+            B = [B Bi]
+        end
+    end
+
+    return B
+end
+
+B = getB(C, -sqrt(1/3), sqrt(1/3))
+
+ϵ = B * U
+
+ϵ
+
+
+```
+
+```{=typst}
+#let ep = (  (0.003221687836487032,),
+  (0.006443375672974064,),
+ (-0.0021650635094610966,))
+
+Hence
+$
+  bold(epsilon) = #array2mat(ep, digits:9)
+$
 
 ```
 
@@ -446,11 +543,75 @@ To better solve this problem, we can use Julia
 
 ```{=typst}
 
+
+
 #set math.equation(numbering: n => [(4.2.5.#n)], supplement: none)
 
 Find an expression for the matrix $B$ of a three-node bar element in 2D as a function of the Jacobian and the local coordinate $xi$. Consider $epsilon = (partial u) / (partial s)$, where $s$ is the curvilinear coordinate along the bar path.
 
 == Solution
-solution text
+
+Strain is defined as the derivative of displacement, that is:
+
+$
+  epsilon = (partial bold(u))/(partial s)
+$
+
+We know that
+
+$
+  J = sqrt(((partial x)/(partial xi))^2+((partial y)/(partial xi))^2) = (partial s) / (partial xi)
+$
+
+$
+ (partial bold(u))/(partial s) = (partial bold(u))/(partial xi) (partial xi)/(partial s) = 1/J (partial bold(u))/(partial xi)
+$ <4241>
+
+It is simple to denote that
+
+$
+  (partial bold(u))/(partial xi) = (partial bold(N))/(partial xi) bold(U)^e
+$
+
+Where, in this case:
+
+$
+  (partial bold(N))/(partial xi)
+  =
+  mat(
+    (partial N_1)/(partial xi), 0, (partial N_2)/(partial xi), 0, (partial N_2)/(partial xi), 0;
+    0, (partial N_1)/(partial xi), 0, (partial N_2)/(partial xi), 0, (partial N_2)/(partial xi) 
+  )
+  \
+  bold(U)^e = mat(
+    x_1, y_1;
+    x_2, y_2;
+    x_3, y_3;
+  )
+$
+
+Substituting it into #ref(<4241>):
+
+$
+  bold(epsilon) = 1/J (partial bold(N))/(partial xi) bold(U)^e
+$
+
+To obtain the strain along the element we can simply project it tangencially:
+$
+  hat(bold(r))^T = (bold(J)^T)/(J) = mat(c,s)
+$
+
+$
+  epsilon = hat(bold(r))^T /J (partial bold(N))/(partial xi) bold(U)^e
+  =
+  bold(J)^T / J^2 (partial bold(N))/(partial xi) bold(U)^e
+  =
+  bold(B)(xi) bold(U)^e
+$
+
+
+$
+  bold(B)(xi) =  bold(J)/J^2 (partial bold(N))/(partial xi) 
+$
 
 ```
