@@ -85,9 +85,11 @@
 // ====================================================================================================
 
 
-#set math.equation(numbering: n => [(4.3.6.#n)], supplement: none)
+#set math.equation(numbering: n => [(4.3.8.#n)], supplement: none)
 
-The nodal coordinates of a 3-node bar element are $(x_1, y_1) = (-1, -1)$, $(x_2, y_2) = (1, 1)$, and $(x_3, y_3) = (0, 1)$. If the unit weight is $gamma = 70 "kN/m"^3$ and the area is $A = 0.02 "m"^2$, calculate the equivalent nodal forces due to the element weight using numerical integration.
+For the element below, determine the corresponding nodal forces if a normal traction $t_n = 1 "kPa"$ is applied on the shaded face.
 
 == Solution
-placeholder
+
+#figure(image("438.png", width: 70%), caption: [Element provided])
+

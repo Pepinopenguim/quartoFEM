@@ -254,11 +254,79 @@ $
 
 ```{=typst}
 
+
+#set math.equation(numbering: n => [(4.3.6.#n)], supplement: none)
+
+The nodal coordinates of a 3-node bar element are $(x_1, y_1) = (-1, -1)$, $(x_2, y_2) = (1, 1)$, and $(x_3, y_3) = (0, 1)$. If the unit weight is $gamma = 70 "kN/m"^3$ and the area is $A = 0.02 "m"^2$, calculate the equivalent nodal forces due to the element weight using numerical integration.
+
+== Solution
+
+The following script will solve the problem stated
+
+```
+
+
+```{julia}
+
+using LinearAlgebra
+
+X = [
+    -1.0 -1.0;
+     1.0  1.0;
+     0.0  1.0
+]
+
+γ = 70.0 # kN/m³
+A = 0.02 # m²
+
+function body_force()
+    return [0.0, -γ * A]
+end
+
+function N(xi)
+    return [
+        0.5 * xi * (xi - 1.0);
+        0.5 * xi * (xi + 1.0);
+        1.0 - xi^2
+    ]
+end
+
+function partial_N(xi)
+    return [
+        xi - 0.5;
+        xi + 0.5;
+        -2.0 * xi
+    ]
+end
+
+function Jacobian(X, xi)
+    return X' * partial_N(xi)
+end
+
+function Fb(N, b, J, X)
+    quad_3 = [
+        (-sqrt(3/5), 5/9),
+        ( 0.0,       8/9),
+        ( sqrt(3/5), 5/9)
+    ]
+    
+    result = zeros(3, 2)
+
+    for (xi, w) in quad_3
+        result += N(xi) * transpose(b()) * norm(J(X, xi)) * w
+    end
+
+    return result
+end
+
+Fb(N, body_force, Jacobian, X)
+
 ```
 
 # Exercise 4.3.7
 
 ```{=typst}
+
 
 #set math.equation(numbering: n => [(4.3.7.#n)], supplement: none)
 
@@ -278,23 +346,305 @@ mat(
 ) "m"
 $
 
+#figure(image("p436.png"), caption: [8-node irregular element with horizontal (a) and normal (b) tractions])
+
 == Solution
-placeholder
+
+
+The equivalent nodal forces are
+
+$
+  bold(F)_t = integral_A bold(N)^T bold(t) J d xi d eta
+$
+
+The shape functions for the nodes of interest are defined as
+
+$
+  mat(N_2;N_3;N_6)
+  =
+  mat(
+    xi / 2 (xi - 1);
+    xi / 2 (xi + 1);
+    1 - xi^2
+  )
+$
+
+In the integral being
+
+$
+  bold(N)^T
+  =
+  mat(
+    N_2, 0;
+    0, N_2;
+    N_3, 0;
+    0, N_3;
+    N_6, 0;
+    0, N_6;
+  )
+$
+
+
+The Jacobian depends on the coordinate matrix $bold(X)$ and the current parametric coordinate $xi$ for the shape function:
+
+$
+  J(xi) = bold(X)^T (d bold(N)(xi))/(d bold(xi))
+$
+
+=== (a)
+The traction vector is then defined as
+
+$
+  bold(t) = mat(
+    -q; 0
+  )
+$
+
+Then we must define
+
+$
+  bold(F)_t
+  =
+  integral_(-1)^(1)
+mat(
+    N_2, 0;
+    0, N_2;
+    N_3, 0;
+    0, N_3;
+    N_6, 0;
+    0, N_6;
+  )
+  mat(
+    -q;0;
+  )
+  abs(abs(J)) d xi 
+$
+
+For the x coordinate, equates to
+
+$
+  F_(x t)
+  =
+  -q
+  integral_(-1)^(1)
+  mat(N_2;N_3;N_6)
+  abs(abs(J))
+  d xi
+$
+
+To solve this in julia:
+
+```
+
+```{julia}
+
+using LinearAlgebra
+
+
+function main()
+
+    X = [
+        4 0;
+        4 4;
+        3 2;
+    ]
+
+    dNdxi(xi) = [
+        xi - 1/2;
+        xi + 1/2;
+        -2 * xi
+    ]
+
+
+    # define quad_2 values
+    quad_2 = [
+        (-1 / sqrt(3), 1.0),
+        ( 1 / sqrt(3), 1.0)
+    ]
+
+    # shape functions as vector
+    N(xi) = [
+        xi / 2 * (xi - 1);
+        xi / 2 * (xi + 1);
+        1 - xi^2
+    ]
+
+    result = zeros(3)
+
+    for (xi, w) in quad_2
+        result += N(xi) * norm(X' * dNdxi(xi)) * w
+    end
+
+    return result
+end
+
+main()
+
+```
+
+```{=typst}
+
+Thus
+
+$
+  F_(x t) =
+  mat(
+    F_(2 x t);
+    F_(3 x t);
+    F_(6 x t);
+  )
+  =
+  -q
+  #array2mat((
+    (0.7698003589195012,),
+    (0.7698003589195008,),
+    (3.0792014356780024,),
+  ),digits:5)
+$
+
+
+== (b)
+
+In relation to the last problem, the only difference is defined in the tension vector, which is now:
+
+$
+  bold(t)(xi) = - hat(n)(xi)q 
+$
+
+We can define the normal vector with the Jacobian:
+
+$
+  hat(n)(xi) perp hat(J)(xi) = bold(J) / (norm(J))
+$
+
+For a 2D Jacobian vector, then:
+
+$
+  hat(n) = mat(hat(J)_2, - hat(J)_1)^T
+$
+
+So, simply:
+
+$
+  bold(F)_t
+  =
+  -q
+  integral_(-1)^(1)
+    mat(
+    N_2, 0;
+    0, N_2;
+    N_3, 0;
+    0, N_3;
+    N_6, 0;
+    0, N_6;
+  )
+  mat(
+    hat(n)_x;
+    hat(n)_y;
+  )
+  norm(J)
+  d xi
+$
+
+```
+
+```{julia}
+
+using LinearAlgebra
+
+
+function main()
+
+    X = [
+        4 0;
+        4 4;
+        3 2;
+    ]
+
+    dNdxi(xi) = [
+        xi - 1/2;
+        xi + 1/2;
+        -2 * xi
+    ]
+
+
+    # define quad_2 values
+    quad_2 = [
+        (-1 / sqrt(3), 1.0),
+        ( 1 / sqrt(3), 1.0)
+    ]
+
+    # shape functions as vector
+    N(xi) = [
+        (xi/2*(xi-1)) 0;
+        0 (xi/2*(xi-1));
+        (xi / 2 * (xi + 1)) 0;
+        0 (xi / 2 * (xi + 1));
+        (1 - xi^2) 0;
+        0 (1 - xi^2);
+    ]
+
+
+
+    function normal(xi)
+        J = X' * dNdxi(xi)
+        hatJ = J / norm(J)
+        return [
+            hatJ[2];
+            -hatJ[1];
+        ]
+    end
+
+    result = zeros(6)
+
+    for (xi, w) in quad_2
+        result += N(xi) * normal(xi) * norm(X' * dNdxi(xi)) * w
+    end
+
+    return result
+end
+
+main() 
+
+```
+
+```{=typst}
+
+
+Thus
+
+$
+  bold(F)_t
+  =
+  mat(
+    F_(2t x);
+    F_(2t y);
+    F_(3t x);
+    F_(3t y);
+    F_(6t x);
+    F_(6t y);
+  )
+  =
+  (-q)/(3)
+  #array2mat(
+      (
+              (2.0,),
+        (1.9999999999999987,),
+        (1.9999999999999996,),
+        (-1.9999999999999987,),
+        (7.999999999999996,),
+        (0.0,),
+      )
+    )
+  
+
+$
 
 ```
 
 # Exercise 4.3.8
 
 ```{=typst}
-
-#set math.equation(numbering: n => [(4.3.8.#n)], supplement: none)
-
-For the element below, determine the corresponding nodal forces if a normal traction $t_n = 1 "kPa"$ is applied on the shaded face.
-
-== Solution
-
-
-=== (a)
 
 
 ```
