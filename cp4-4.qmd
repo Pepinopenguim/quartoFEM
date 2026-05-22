@@ -1,0 +1,98 @@
+
+# Exercise 4.4.5
+
+```typst
+#set math.equation(numbering: n => [(4.4.5.#n)], supplement: none)
+
+Using computer software, compute the stiffness matrix for the triangular element. Use $E = 20 "GPa"$ and $nu = 0.25$.
+
+#figure(image("445.png", width: 70%), caption: [Triangular element with coordinates $(1, 1)$, $(2, 1)$, and $(1, 2)$])
+
+== Solution
+placeholder
+```
+
+```julia
+
+```
+
+***
+
+# Exercise 4.4.6
+
+```typst
+#set math.equation(numbering: n => [(4.4.6.#n)], supplement: none)
+
+The nodal coordinates of a three-node bar element are
+$
+  bold(C) = mat(
+    -1, -1;
+     1,  1;
+     0,  1
+  ) "m"
+$
+At the end of a finite-element analysis, the axial stresses at the three integration points are $sigma_1 = 5 "kPa"$, $sigma_2 = 10 "kPa"$, and $sigma_3 = 15 "kPa"$. Compute the nodal internal forces vector.
+
+== Solution
+placeholder
+```
+
+```julia
+
+```
+
+***
+
+# Exercise 4.4.7
+
+```typst
+#set math.equation(numbering: n => [(4.4.7.#n)], supplement: none)
+
+The nodal coordinates of a four-node quadrilateral element are
+$
+  bold(C) = mat(
+    0, 0;
+    2, 0;
+    2, 2;
+    0, 2
+  ) "m"
+$
+and the nodal displacements are
+$
+  bold(U)^((e)) = (0.0, 0.0, 0.001, 0.0, 0.002, -0.001, -0.001, -0.001) "m"
+$
+Assuming full integration, compute the internal nodal-force vector. Use $E = 20 "GPa"$ and $nu = 0.1$.
+
+== Solution
+placeholder
+```
+
+```julia
+
+```
+
+***
+
+# Exercise 4.4.8
+
+```typst
+#set math.equation(numbering: n => [(4.4.8.#n)], supplement: none)
+
+The two-element mesh was designed to simulate self-weight in a structure under plane stress conditions. Each element has dimensions $1 times 1 "m"$. Considering full integration, compute:
+
+a. The stiffness matrix for each element.
+b. The equivalent nodal loads corresponding to the body force.
+c. The global stiffness matrix and the global force vector.
+d. The nodal displacements and reactions.
+e. The strain and stress vectors at the integration points of element 1.
+f. Check if the vertical stress at a lower integration point of element 1 is close to the analytical value $gamma h$.
+
+#figure(image("448.png", width: 70%), caption: [Two-element mesh simulating self-weight with $E = 20 "GPa"$, $nu = 0.25$, $gamma = 25 "kN/m"^3$, and $"thickness" = 0.2 "m"$])
+
+== Solution
+placeholder
+```
+
+```julia
+
+```

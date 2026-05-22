@@ -647,4 +647,137 @@ $
 ```{=typst}
 
 
+
+#set math.equation(numbering: n => [(4.3.8.#n)], supplement: none)
+
+For the element below, determine the corresponding nodal forces if a normal traction $t_n = 1 "kPa"$ is applied on the shaded face.
+
+
+#figure(image("438.png", width: 70%), caption: [Element provided])
+
+== Solution
+
+
+Normal traction is defined as
+
+$
+  bold(F)_n = t_n integral_A bold(N)^T hat(bold(n))d A
+$
+
+The shape functions for a 4-node square 3D plane are
+
+$
+  N_i = 1/4(1 + xi_i xi) (1 + eta_i eta)
+$
+
+Thus, to solve this problem, we will use the following julia script
+
+```
+
+
+```{julia}
+
+using LinearAlgebra
+
+
+function main()
+    tn = -1 # kPa
+
+    X = [
+        2 2 1;
+        0 2 1;
+        0 0 2;
+        2 0 2;
+    ]
+
+    # shape functions as vector
+    N(xi, eta) = [
+        1/4 * (1 - xi) * (1 - eta);
+        1/4 * (1 + xi) * (1 - eta);
+        1/4 * (1 + xi) * (1 + eta);
+        1/4 * (1 - xi) * (1 + eta);
+    ]
+    # its derivatives
+    dNdxi(xi, eta) = [
+        (1/4 * (-1 + eta))   (1/4 * (-1 + xi));
+        (1/4 * ( 1 - eta))   (1/4 * (-1 - xi));
+        (1/4 * ( 1 + eta))   (1/4 * ( 1 + xi));
+        (1/4 * (-1 - eta))   (1/4 * ( 1 - xi));
+    ]
+
+    N_matrix(xi, eta) = transpose([
+        N(xi, eta)[1] * Matrix(1I, 3,3)
+        N(xi, eta)[2] * Matrix(1I, 3,3)
+        N(xi, eta)[3] * Matrix(1I, 3,3)
+        N(xi, eta)[4] * Matrix(1I, 3,3)
+    ])
+
+    Jacobian(xi, eta) = X' * dNdxi(xi, eta)
+
+    function normal(xi, eta)
+        J = Jacobian(xi, eta)
+        n = cross(J[:, 1], J[:, 2])
+        return n / norm(n)
+    end
+
+    quad_3 = [
+        (-sqrt(3/5), 5/9),
+        (0, 8/9),
+        (sqrt(3/5), 5/9),
+    ]
+
+    # solving the integral
+    result = zeros(12)
+
+    for (xi, wi) in quad_3
+        for (eta, wj) in quad_3
+            J = Jacobian(xi, eta)
+            result += N_matrix(xi, eta)' * normal(xi, eta) * sqrt(det(J' * J)) * wi * wj
+        end
+    end
+
+    return result * tn
+end
+
+main() 
+```
+
+```{=typst}
+
+
+Thus, according to the local mapping (node 1 at $(2,2,1)$)
+
+$
+  mat(
+    F_x_1;
+    F_y_1;
+    F_z_1;
+    F_x_2;
+    F_y_2;
+    F_z_2;
+    F_x_3;
+    F_y_3;
+    F_z_3;
+    F_x_4;
+    F_y_4;
+    F_z_4;
+  )
+  =
+  -
+  mat(
+    0.0;
+    0.5;
+    1.0;
+    0.0;
+    0.5;
+    1.0;
+    0.0;
+    0.5;
+    1.0;
+    0.0;
+    0.5;
+    1.0;
+  )
+$
+
 ```

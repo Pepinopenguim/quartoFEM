@@ -83,13 +83,3 @@
 }
 
 // ====================================================================================================
-
-
-#set math.equation(numbering: n => [(4.3.8.#n)], supplement: none)
-
-For the element below, determine the corresponding nodal forces if a normal traction $t_n = 1 "kPa"$ is applied on the shaded face.
-
-== Solution
-
-#figure(image("438.png", width: 70%), caption: [Element provided])
-
