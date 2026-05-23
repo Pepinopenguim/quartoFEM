@@ -1,26 +1,156 @@
 
 # Exercise 4.4.5
 
-```typst
+```{=typst}
+
 #set math.equation(numbering: n => [(4.4.5.#n)], supplement: none)
 
 Using computer software, compute the stiffness matrix for the triangular element. Use $E = 20 "GPa"$ and $nu = 0.25$.
 
-#figure(image("445.png", width: 70%), caption: [Triangular element with coordinates $(1, 1)$, $(2, 1)$, and $(1, 2)$])
+#figure(image("445.png", width: 50%), caption: [Triangular element with coordinates $(1, 1)$, $(2, 1)$, and $(1, 2)$])
 
 == Solution
-placeholder
+
+
+For a 3-node triangular element, the strain-displacement matrix $bold(B)$ and the constitutive matrix $bold(D)$ are strictly constant over the entire element domain, which simplifies the stiffness matrix:
+
+$
+  bold(K) = integral_A bold(B)^T bold(D) bold(B) h d A = bold(B)^T bold(D) bold(B) h A
+$
+
+Assuming a plane stress condition and a unit thickness ($h = 1$), the coordinate matrix for the given element is:
+
+$
+  bold(C) = mat(
+    1, 1;
+    2, 1;
+    1, 2
+  ) "m"
+$
+
+The derivatives of the linear shape functions with respect to the natural coordinates $(xi, eta)$ are constant for all integration points:
+
+$
+  (partial bold(N))/(partial bold(xi)) = mat(
+    -1, -1;
+     1,  0;
+     0,  1
+  )
+$
+
+The Jacobian matrix evaluates perfectly to the identity matrix, meaning the element is an undistorted right triangle:
+
+$
+  bold(J) = bold(C)^T (partial bold(N))/(partial bold(xi)) = mat(1, 0; 0, 1)
+$
+
+Since $det(bold(J)) = 1$, the area of the element is $A = 1/2 det(bold(J)) = 0.5 "m"^2$. We can define the inverse of the Jacobian as
+
+$
+  bold(J)^(-1) = "adj"(bold(J))/det(bold(J)) = bold(I)
+$
+
+Thus,
+
+$
+  bold(B) = mat(
+    (partial N_1)/(partial x), 0, (partial N_2)/(partial x), 0, (partial N_3)/(partial x), 0;
+    0, (partial N_1)/(partial y), 0, (partial N_2)/(partial y), 0, (partial N_3)/(partial y);
+    (partial N_1)/(partial y), (partial N_1)/(partial x), (partial N_2)/(partial y), (partial N_2)/(partial x), (partial N_3)/(partial y), (partial N_3)/(partial x)
+  )
+  =
+  mat(
+    -1,  0,  1,  0,  0,  0;
+     0, -1,  0,  0,  0,  1;
+    -1, -1,  0,  1,  1,  0
+  )
+$
+
+Finally, substituting $E = 20 "GPa"$ and $nu = 0.25$ into the plane stress constitutive matrix $bold(D)$, the constant stiffness matrix $bold(K)$ can be evaluated analytically or numerically.
+
 ```
 
-```julia
+```{julia}
+
+
+using LinearAlgebra
+
+function main()
+    # coords
+    C = [
+        1.0  1.0;
+        2.0  1.0;
+        1.0  2.0
+    ]
+    
+    # Material properties and geometry
+    E = 20e9 # Pa
+    nu = 0.25
+    h = 1.0 # assumed unit thicness
+
+    # matrix D
+    D = (E / (1 - nu^2)) * [
+        1.0   nu    0.0;
+        nu    1.0   0.0;
+        0.0   0.0   (1 - nu)/2
+    ]
+
+    dNdxi = [
+        -1.0 -1.0;
+         1.0  0.0;
+         0.0  1.0
+    ]
+
+    # Jacobian, in this case constant
+    J = C' * dNdxi
+    
+    # Calculate the area 
+    Area = 0.5 * abs(det(J))
+
+    # Cartesian derivatives of the shape functions
+    dNdX = dNdxi * inv(J)
+
+    # Assemble the B matrix 
+    B = zeros(3, 6)
+    for i in 1:3
+        col = (i - 1) * 2
+        B[1, col + 1] = dNdX[i, 1]
+        B[2, col + 2] = dNdX[i, 2]
+        B[3, col + 1] = dNdX[i, 2]
+        B[3, col + 2] = dNdX[i, 1]
+    end
+
+    # Compute the stiffness matrix (B and D are constant, so numerical integration loop is bypassed)
+    K = B' * D * B * h * Area
+
+    return K
+end
+
+
+display(main())
 
 ```
 
-***
+```{=typst}
+
+
+#let k = ((1.46667e10,6.66667e9,-1.06667e10,-4.0e9,-4.0e9,-2.66667e9),(6.66667e9,1.46667e10,-2.66667e9,-4.0e9,-4.0e9,-1.06667e10),(-1.06667e10,-2.66667e9,1.06667e10,0.0,0.0,2.66667e9),(-4.0e9,-4.0e9,0.0,4.0e9,4.0e9,0.0),(-4.0e9,-4.0e9,0.0,4.0e9,4.0e9,0.0),(-2.66667e9,-1.06667e10,2.66667e9,0.0,0.0,1.06667e10)).map(row => row.map(v => v *1e-9))
+
+Thus
+
+$
+  bold(K) = #array2mat(k) dot 10^9 N/m
+$
+
+
+```
+
+
 
 # Exercise 4.4.6
 
-```typst
+```{=typst}
+
 #set math.equation(numbering: n => [(4.4.6.#n)], supplement: none)
 
 The nodal coordinates of a three-node bar element are
@@ -34,18 +164,109 @@ $
 At the end of a finite-element analysis, the axial stresses at the three integration points are $sigma_1 = 5 "kPa"$, $sigma_2 = 10 "kPa"$, and $sigma_3 = 15 "kPa"$. Compute the nodal internal forces vector.
 
 == Solution
-placeholder
+
+As defined by the following script:
 ```
 
-```julia
+```{julia}
+using LinearAlgebra
+
+function main()
+    σ = [
+        5,
+        10,
+        15
+    ] * 1e3 # Pa
+
+    A = 1 #m²
+
+    C = [
+        -1 -1;
+         1  1;
+         0  1;
+    ] # m
+
+    N(xi) = [
+        0.5 * xi * (xi - 1);
+        0.5 * xi * (xi + 1);
+        1 - xi^2
+    ]
+
+    function N_2d_matrix(xi)
+        m = nothing
+        for i in 1:length(N(xi))
+            subN = dNdxi(xi)[i] * Matrix(1I, 2, 2)
+            if m === nothing
+                m = subN
+            else
+                m = [m subN]
+            end
+        end
+        return m
+    end
+
+    dNdxi(xi) = [
+        xi - 0.5;
+        xi + 0.5;
+        -2 * xi;
+    ]
+
+    Jacobian(xi) = C' * dNdxi(xi)
+
+    function B(xi)
+        J = Jacobian(xi)
+        return J' / (norm(J)^2) * N_2d_matrix(xi)
+    end
+
+    quad_3 = [
+        (-sqrt(3/5), 5/9),
+        (0, 8/9),
+        (sqrt(3/5), 5/9),
+    ]
+
+    result = zeros(6)
+    for (i, (xi, w)) in enumerate(quad_3)
+        result += B(xi)' * σ[i] * norm(Jacobian(xi)) * w
+    end
+
+    
+    return result * A
+    
+end
+
+main() # N
+```
+
+```{=typst}
+
+Thus
+
+#let F = (
+  (-2429.928026819304,),
+  (-7540.24644964248,),
+  (12174.161585552662,),
+  (-2680.390396003872,),
+  (-9744.23355873336,),
+  (10220.636845646353,),
+).map(
+  row => row.map(
+    v => v / 1e3
+  )
+)
+
+$
+  bold(F) = #array2mat(F) dot k N
+$
+
+
 
 ```
 
-***
+
 
 # Exercise 4.4.7
 
-```typst
+```{=typst}
 #set math.equation(numbering: n => [(4.4.7.#n)], supplement: none)
 
 The nodal coordinates of a four-node quadrilateral element are
@@ -64,18 +285,153 @@ $
 Assuming full integration, compute the internal nodal-force vector. Use $E = 20 "GPa"$ and $nu = 0.1$.
 
 == Solution
-placeholder
+The following script solves for the element above, and any other similar element:
 ```
 
-```julia
+```{julia}
+#| include: false
+import Pkg
+try
+    using BenchmarkTools
+catch
+    Pkg.add("BenchmarkTools")
+    using BenchmarkTools
+end
+;
+```
+
+```{julia}
+using LinearAlgebra
+
+function K(C, E, ν, h)
+    
+
+    # for plane stress
+    D = [
+        1 ν 0;
+        ν 1 0;
+        0 0 (1 - ν) / 2;
+    ] * E / (1 - ν ^ 2)
+
+    function Ni(xi_i, eta_i)
+        return N(xi, eta) = 0.25 * (1 + xi_i * xi) * (1 + eta_i * eta)
+    end
+
+    function dNi(xi_i, eta_i)
+        return dN(xi, eta) = [
+            ((xi_i + xi_i * eta_i * eta) / 4) ((eta_i + xi_i * eta_i * xi )/ 4);
+        ]
+    end
+
+    N(xi, eta) = [
+        Ni(-1, -1)(xi, eta);
+        Ni( 1, -1)(xi, eta);
+        Ni( 1,  1)(xi, eta);
+        Ni(-1,  1)(xi, eta);
+    ]
+
+    dNdxi(xi, eta) = [
+        dNi(-1, -1)(xi, eta);
+        dNi( 1, -1)(xi, eta);
+        dNi( 1,  1)(xi, eta);
+        dNi(-1,  1)(xi, eta);
+    ]
+
+    Jacobian(xi, eta) = C' * dNdxi(xi, eta)
+
+
+    function B(xi, eta)
+        J = Jacobian(xi, eta)
+        dN_dξη = dNdxi(xi, eta)
+
+        # transform derivatives
+        dN_dxdy = dN_dξη * inv(J)
+
+        Bmat = zeros(3, 8)
+
+        for (i, (dx, dy)) in enumerate(eachrow(dN_dxdy))
+            Bmat[:, 2i-1:2i] .= [
+                dx 0
+                0  dy
+                dy dx
+            ]
+        end
+
+        return Bmat
+    end 
+
+    quad_2 = [
+        (-1 / sqrt(3), 1.0),
+        ( 1 / sqrt(3), 1.0)
+    ]
+
+    result = zeros(8,8)
+
+    # final integration
+    for (xi, wi) in quad_2
+        for (eta, wj) in quad_2
+            result += h * B(xi, eta)' * D * B(xi, eta) * det(Jacobian(xi, eta)) * wi * wj 
+        end
+    end
+
+    return result
+end
+
+# geometry and material definitions
+C = [
+    0 0;
+    2 0;
+    2 2;
+    0 2;
+]
+# thickness
+h = 1 #m
+
+E = 20e9 # Pa
+ν = .1 
+
+# displacements
+U = [
+    0.0 0.0 0.001 0.0 0.002 -0.001 -0.001 -0.001
+]' #m
+
+k = K(C, E, ν, h)
+
+F = k * U
+```
+
+```{=typst}
+
+
+Thus
+
+#let F = (
+  (-1.4309764309764307e7,),
+  (8.080808080808082e6,),
+  (1.4309764309764307e7,),
+  (8.080808080808081e6,),
+  (2.4074074074074075e7,),
+  (-8.080808080808083e6,),
+  (-2.4074074074074075e7,),
+  (-8.080808080808081e6,),
+)
+
+$
+  bold(F)
+  =
+  #array2mat(
+    scalar_matrix_mult(1e-6, F)
+  )
+  "MN"
+  
+$
 
 ```
 
-***
 
 # Exercise 4.4.8
 
-```typst
+```{=typst}
 #set math.equation(numbering: n => [(4.4.8.#n)], supplement: none)
 
 The two-element mesh was designed to simulate self-weight in a structure under plane stress conditions. Each element has dimensions $1 times 1 "m"$. Considering full integration, compute:
@@ -90,9 +446,218 @@ f. Check if the vertical stress at a lower integration point of element 1 is clo
 #figure(image("448.png", width: 70%), caption: [Two-element mesh simulating self-weight with $E = 20 "GPa"$, $nu = 0.25$, $gamma = 25 "kN/m"^3$, and $"thickness" = 0.2 "m"$])
 
 == Solution
-placeholder
+
+This solution aims to be a review of all ideas presented in the chapters preceding it. Thus, for each cell of julia code, a small definition of all elements will be defined.
+
 ```
 
-```julia
+```{=typst}
+=== (a)
+
+First step if to define the elements's stiffness matrix. Well, from the definition of virtual work, which, in simpler terms, relates the effects of deformations and virtual displacements:
+
+$
+  integral_(bold(Omega)^((e))) delta bold(epsilon) dot bold(sigma) "dV" = integral_(bold(Omega)^((e))) delta bold(u) dot bold(b) "dV" + integral_(bold(Gamma)_t^((e))) delta bold(u) dot bold(t) "dS"
+$ <bigboy>
+
+Both strains and virtual displacements can be defined relating to the nodal displacements $delta bold(U)$
+
+$
+  delta bold(u) = bold(N) delta bold(U)^((e))
+$
+
+$
+  delta bold(xi) = bold(B) delta bold(U)^((e))
+$
+
+Which can simplify #ref(<bigboy>) into:
+
+$
+  integral_(bold(Omega)^((e))) bold(B)^T  bold(sigma) "dV"
+  =
+  integral_(bold(Omega)^((e))) bold(N)^T  bold(b) "dV"
+  +
+  integral_(bold(Gamma)_t^((e))) bold(N)^T bold(t) "dS"
+$ <smallboy>
+
+As I see it, #ref(<smallboy>) relates the internal tensions in the body with forces applied to it, let it be internal (like body mass or eletromagnetic forces) or external (standard forces, water pressure, etc.). So, our stiffness matrix is defined in the left side of the equation #ref(<smallboy>).
+
+For *small-strain linear elasticity* we have:
+
+$
+  bold(sigma = D B U^((e)))
+$
+
+Hence,
+
+$
+  integral_(bold(Omega)^((e))) bold(B)^T  bold(sigma) "dV"
+  =
+  (
+  integral_(bold(Omega)^((e))) bold(B)^T  bold(D B) "dV"
+  ) bold(U^((e)))
+  =
+  bold(K^((e)) U^((e)))
+$
+
+The following script will then, as defined by the last problem, calculate $bold(K)$ with the integral defined above:
+```
+
+```{julia}
+using LinearAlgebra
+
+# Since all elements have the same materials, firstly we define them
+
+E = 20 * 1e9 # GPa
+ν = .25
+γ = 25 * 1e3 # kN/m³
+h = .2 #m
+
+
+function Ni(xi_i, eta_i)
+    return N(xi, eta) = 0.25 * (1 + xi_i * xi) * (1 + eta_i * eta)
+end
+
+function dNi(xi_i, eta_i)
+    return dN(xi, eta) = [
+        ((xi_i + xi_i * eta_i * eta) / 4) ((eta_i + xi_i * eta_i * xi )/ 4);
+    ]
+end
+
+N(xi, eta) = [
+    Ni(-1, -1)(xi, eta);
+    Ni( 1, -1)(xi, eta);
+    Ni( 1,  1)(xi, eta);
+    Ni(-1,  1)(xi, eta);
+]
+
+dNdxi(xi, eta) = [
+    dNi(-1, -1)(xi, eta);
+    dNi( 1, -1)(xi, eta);
+    dNi( 1,  1)(xi, eta);
+    dNi(-1,  1)(xi, eta);
+]
+
+Jacobian(xi, eta) = C' * dNdxi(xi, eta)
+
+# Define stiffness matrix
+# We can use the last problem's function to directly obtain the
+# local stiffness matrix for each element
+
+function get_k(C, E, ν, h)
+
+    # for plane stress (2D problem, with no stress in the z direction)
+    D = [
+        1 ν 0;
+        ν 1 0;
+        0 0 (1 - ν) / 2;
+    ] * E / (1 - ν ^ 2)
+
+    
+
+
+    function B(xi, eta)
+        J = Jacobian(xi, eta)
+        dN_dξη = dNdxi(xi, eta)
+
+        # transform derivatives
+        dN_dxdy = dN_dξη * inv(J)
+
+        Bmat = zeros(3, 8)
+
+        for (i, (dx, dy)) in enumerate(eachrow(dN_dxdy))
+            Bmat[:, 2i-1:2i] .= [
+                dx 0
+                0  dy
+                dy dx
+            ]
+        end
+
+        return Bmat
+    end 
+
+    quad_2 = [
+        (-1 / sqrt(3), 1.0),
+        ( 1 / sqrt(3), 1.0)
+    ]
+
+    result = zeros(8,8)
+
+    # final integration
+    for (xi, wi) in quad_2
+        for (eta, wj) in quad_2
+            result += h * B(xi, eta)' * D * B(xi, eta) * det(Jacobian(xi, eta)) * wi * wj 
+        end
+    end
+
+    return result
+end
+
+C1 = [
+    0 0;
+    1 0;
+    1 1;
+    0 1;
+]
+
+C2 = [
+    0 1;
+    1 1;
+    1 2;
+    0 2;
+]
+# let lowercase k be the element's (non global) stiffness matrix
+k1 = get_k(C1, E, ν, h) 
+k2 = get_k(C2, E, ν, h) 
+
+println("===== Results =====")
+println("K1 = ")
+println(k2)
+println("K2 = ")
+println(k2)
+```
+
+
+```{=typst}
+
+```
+
+```{julia}
+
+```
+
+
+```{=typst}
+=== (c)
+```
+
+```{julia}
+
+```
+
+
+```{=typst}
+=== (d)
+```
+
+```{julia}
+
+```
+
+
+```{=typst}
+=== (e)
+```
+
+```{julia}
+
+```
+
+
+```{=typst}
+=== (f)
+```
+
+```{julia}
 
 ```

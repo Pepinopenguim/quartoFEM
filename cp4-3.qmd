@@ -503,7 +503,7 @@ $
 $
 
 
-== (b)
+=== (b)
 
 In relation to the last problem, the only difference is defined in the tension vector, which is now:
 

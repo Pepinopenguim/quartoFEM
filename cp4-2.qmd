@@ -606,74 +606,74 @@ $
 ```{=typst}
 
 
-
 #set math.equation(numbering: n => [(4.2.5.#n)], supplement: none)
 
 Find an expression for the matrix $B$ of a three-node bar element in 2D as a function of the Jacobian and the local coordinate $xi$. Consider $epsilon = (partial u) / (partial s)$, where $s$ is the curvilinear coordinate along the bar path.
 
 == Solution
 
-Strain is defined as the derivative of displacement, that is:
+Strain is defined as the derivative of displacement. Because the 1D bar is embedded in 2D space, the structural axial strain $epsilon$ is the projection of the global displacement derivatives onto the local unit tangent vector $hat(bold(r))$:
 
 $
-  epsilon = (partial bold(u))/(partial s)
+  epsilon = hat(bold(r))^T (partial bold(u))/(partial s)
 $
 
-We know that
+We know the scalar Jacobian relates the curvilinear coordinate $s$ to the natural coordinate $xi$:
 
 $
   J = sqrt(((partial x)/(partial xi))^2+((partial y)/(partial xi))^2) = (partial s) / (partial xi)
 $
 
+Using the chain rule, the global displacement derivatives with respect to $s$ are:
+
 $
  (partial bold(u))/(partial s) = (partial bold(u))/(partial xi) (partial xi)/(partial s) = 1/J (partial bold(u))/(partial xi)
 $ <4241>
 
-It is simple to denote that
+The displacement derivatives with respect to $xi$ can be interpolated using the shape functions:
 
 $
   (partial bold(u))/(partial xi) = (partial bold(N))/(partial xi) bold(U)^e
 $
 
-Where, in this case:
+Where, for a 3-node bar in 2D, the shape function derivative matrix and the nodal displacement vector are:
 
 $
   (partial bold(N))/(partial xi)
   =
   mat(
-    (partial N_1)/(partial xi), 0, (partial N_2)/(partial xi), 0, (partial N_2)/(partial xi), 0;
-    0, (partial N_1)/(partial xi), 0, (partial N_2)/(partial xi), 0, (partial N_2)/(partial xi) 
+    (partial N_1)/(partial xi), 0, (partial N_2)/(partial xi), 0, (partial N_3)/(partial xi), 0;
+    0, (partial N_1)/(partial xi), 0, (partial N_2)/(partial xi), 0, (partial N_3)/(partial xi) 
   )
   \
   bold(U)^e = mat(
-    x_1, y_1;
-    x_2, y_2;
-    x_3, y_3;
+    u_1; v_1; u_2; v_2; u_3; v_3
   )
 $
 
-Substituting it into #ref(<4241>):
+Substituting this back into the strain equation:
 
 $
-  bold(epsilon) = 1/J (partial bold(N))/(partial xi) bold(U)^e
+  epsilon = hat(bold(r))^T 1/J (partial bold(N))/(partial xi) bold(U)^e
 $
 
-To obtain the strain along the element we can simply project it tangencially:
-$
-  hat(bold(r))^T = (bold(J)^T)/(J) = mat(c,s)
-$
+The unit tangent vector is the Jacobian vector divided by its magnitude:
 
 $
-  epsilon = hat(bold(r))^T /J (partial bold(N))/(partial xi) bold(U)^e
-  =
-  bold(J)^T / J^2 (partial bold(N))/(partial xi) bold(U)^e
-  =
-  bold(B)(xi) bold(U)^e
+  hat(bold(r))^T = (bold(J)^T)/(J) = 1/J mat((partial x)/(partial xi), (partial y)/(partial xi))
 $
 
+Thus, the strain can be written as:
 
 $
-  bold(B)(xi) =  bold(J)/J^2 (partial bold(N))/(partial xi) 
+  epsilon = (bold(J)^T)/J^2 (partial bold(N))/(partial xi) bold(U)^e = bold(B)(xi) bold(U)^e
 $
+
+Yielding the final expression for the $bold(B)$ matrix:
+
+$
+  bold(B)(xi) =  (bold(J)^T)/J^2 (partial bold(N))/(partial xi) 
+$
+
 
 ```
