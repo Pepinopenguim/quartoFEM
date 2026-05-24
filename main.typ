@@ -157,6 +157,29 @@ $
 
 The following script will then, as defined by the last problem, calculate $bold(K)$ with the integral defined above:
 
+---------------
+
+#let littlek = (
+( 1.95556e9,  6.66667e8, -1.15556e9, -1.33333e8, -9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8 ),
+( 6.66667e8,  1.95556e9,  1.33333e8,  1.77778e8, -6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9 ),
+(-1.15556e9,  1.33333e8,  1.95556e9, -6.66667e8,  1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8 ),
+(-1.33333e8,  1.77778e8, -6.66667e8,  1.95556e9,  1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8 ),
+(-9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8,  1.95556e9,  6.66667e8, -1.15556e9, -1.33333e8 ),
+(-6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9,  6.66667e8,  1.95556e9,  1.33333e8,  1.77778e8 ),
+( 1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8, -1.15556e9,  1.33333e8,  1.95556e9, -6.66667e8 ),
+( 1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8, -1.33333e8,  1.77778e8, -6.66667e8,  1.95556e9 )
+)
+
+Thus, 
+
+#{
+  set text(9pt)
+$
+  k_1 ^((e)) = k_2 ^((e)) =
+  #array2mat(scalar_matrix_mult(1e-9, littlek))
+  10^(-9)
+$
+}
 
 ------------
 === (b)
@@ -187,3 +210,214 @@ $
 
 Since the structure is subjected to self-weight, the body force vector acts purely in the vertical direction, meaning $bold(b) = mat(0; -gamma)$. The following script will evaluate this integral numerically to compute the equivalent load vector for each element.
 
+-----------------
+=== (c)
+
+After obtaining the individual element stiffness matrices and equivalent load vectors, the next step is to combine them into a single global algebraic system that represents the entire structure. This global system of equations is given by:
+
+$
+  bold(K) bold(U) = bold(F)
+$
+
+The assembly process builds this system by enforcing compatibility between adjacent elements through their shared nodal degrees of freedom. Each element's stiffness matrix $bold(K)^((e))$ and load vector $bold(F)^((e))$ are accumulated into the global stiffness matrix $bold(K)$ and the global force vector $bold(F)$. 
+
+The exact placement of these element contributions into the global system is determined by the element's location vector $ell^((e))$, which maps the element's local degrees of freedom to the correct rows and columns in the global arrays. 
+
+The element will be defined according to the following matrix, that relates the node coordinates with their $"DOF"$:
+
+$
+  mat(
+    0, 0;
+    1, 0;
+    1, 1;
+    0, 1;
+    1, 2;
+    0, 2;
+  )
+  =
+  mat(
+    1, 2;
+    3, 4;
+    5, 6;
+    7, 8;
+    9, 10;
+    11, 12;
+  )
+  =
+  mat(
+    i, i+1
+    ;
+    dots.v, dots.v
+  )
+$
+
+// AI wrote this bit but the code is mine gimme a break like
+#let K = (
+( 1.95556e9,  6.66667e8, -1.15556e9, -1.33333e8, -9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8,  0.0,        0.0,        0.0,        0.0       ),
+( 6.66667e8,  1.95556e9,  1.33333e8,  1.77778e8, -6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9,  0.0,        0.0,        0.0,        0.0       ),
+(-1.15556e9,  1.33333e8,  1.95556e9, -6.66667e8,  1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8,  0.0,        0.0,        0.0,        0.0       ),
+(-1.33333e8,  1.77778e8, -6.66667e8,  1.95556e9,  1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8,  0.0,        0.0,        0.0,        0.0       ),
+(-9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8,  3.91111e9, -2.38419e-7, -2.31111e9,  2.98023e-8,  1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8),
+(-6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9, -2.38419e-7,  3.91111e9,  0.0,         3.55556e8,  1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8),
+( 1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8, -2.31111e9, -5.96046e-8,  3.91111e9,  2.38419e-7, -9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8),
+( 1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8, -2.98023e-8,  3.55556e8,  2.38419e-7,  3.91111e9, -6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9),
+( 0.0,        0.0,        0.0,        0.0,         1.77778e8,  1.33333e8, -9.77778e8, -6.66667e8,  1.95556e9,  6.66667e8, -1.15556e9, -1.33333e8),
+( 0.0,        0.0,        0.0,        0.0,        -1.33333e8, -1.15556e9, -6.66667e8, -9.77778e8,  6.66667e8,  1.95556e9,  1.33333e8,  1.77778e8),
+( 0.0,        0.0,        0.0,        0.0,        -9.77778e8,  6.66667e8,  1.77778e8, -1.33333e8, -1.15556e9,  1.33333e8,  1.95556e9, -6.66667e8),
+( 0.0,        0.0,        0.0,        0.0,         6.66667e8, -9.77778e8,  1.33333e8, -1.15556e9, -1.33333e8,  1.77778e8, -6.66667e8,  1.95556e9)
+)
+
+-----------
+
+// AI wrote this bit but the code is mine gimme a break like
+#let K = (
+( 1.95556e9,  6.66667e8, -1.15556e9, -1.33333e8, -9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8,  0.0,        0.0,        0.0,        0.0       ),
+( 6.66667e8,  1.95556e9,  1.33333e8,  1.77778e8, -6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9,  0.0,        0.0,        0.0,        0.0       ),
+(-1.15556e9,  1.33333e8,  1.95556e9, -6.66667e8,  1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8,  0.0,        0.0,        0.0,        0.0       ),
+(-1.33333e8,  1.77778e8, -6.66667e8,  1.95556e9,  1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8,  0.0,        0.0,        0.0,        0.0       ),
+(-9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8,  3.91111e9, -2.38419e-7, -2.31111e9,  2.98023e-8,  1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8),
+(-6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9, -2.38419e-7,  3.91111e9,  0.0,         3.55556e8,  1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8),
+( 1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8, -2.31111e9, -5.96046e-8,  3.91111e9,  2.38419e-7, -9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8),
+( 1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8, -2.98023e-8,  3.55556e8,  2.38419e-7,  3.91111e9, -6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9),
+( 0.0,        0.0,        0.0,        0.0,         1.77778e8,  1.33333e8, -9.77778e8, -6.66667e8,  1.95556e9,  6.66667e8, -1.15556e9, -1.33333e8),
+( 0.0,        0.0,        0.0,        0.0,        -1.33333e8, -1.15556e9, -6.66667e8, -9.77778e8,  6.66667e8,  1.95556e9,  1.33333e8,  1.77778e8),
+( 0.0,        0.0,        0.0,        0.0,        -9.77778e8,  6.66667e8,  1.77778e8, -1.33333e8, -1.15556e9,  1.33333e8,  1.95556e9, -6.66667e8),
+( 0.0,        0.0,        0.0,        0.0,         6.66667e8, -9.77778e8,  1.33333e8, -1.15556e9, -1.33333e8,  1.77778e8, -6.66667e8,  1.95556e9)
+)
+
+Thus:
+
+#let F = (
+    (0.0,),
+  (-6250.0,),
+   (   0.0,),
+(  -6250.0,),
+(      0.0,),
+( -12499.999999999998,),
+(      0.0,),
+( -12499.999999999998,),
+(      0.0,),
+ ( -6249.999999999998,),
+ (     0.0,),
+ ( -6249.999999999998,),
+)
+
+
+#{
+  set text(8pt)
+  $
+    K=
+    #array2mat(scalar_matrix_mult(1e-9, K), digits:2)
+    10^(-9)
+  $
+
+  $
+    F=
+    #array2mat(scalar_matrix_mult(1e-3, F), digits:2)
+    10^(-3) N
+  $
+}
+
+
+=== (d)
+
+With the global system assembled, we apply the essential boundary conditions to find the unknown nodal displacements and support reactions. This is achieved by partitioning the global system $bold(K) bold(U) = bold(F)$ into free (subscript 1) and constrained (subscript 2) degrees of freedom:
+
+$
+  mat(
+    bold(K)_11, bold(K)_12;
+    bold(K)_21, bold(K)_22
+  )
+  mat(
+    bold(U)_1;
+    bold(U)_2
+  )
+  =
+  mat(
+    bold(F)_1;
+    bold(F)_2
+  )
+$
+
+The unknown displacements $bold(U)_1$ are found by solving the first set of equations:
+
+$
+  bold(U)_1 = bold(K)_11^(-1) (bold(F)_1 - bold(K)_12 bold(U)_2)
+$
+
+Once the displacement field is fully known, the unknown reaction forces $bold(F)_2$ at the supports are recovered using the second set of equations:
+
+$
+  bold(F)_2 = bold(K)_21 bold(U)_1 + bold(K)_22 bold(U)_2
+$
+
+Although possible, the realocation of matrices can become very heavy on the computer memory. Another method, much simples programatically, is to enforce the known displacements into the matrix for all given supports, like done in the snipped below
+
+
+--------
+
+#let Ufound = (
+ (    0.0,),
+ ( 0.0,),
+ ( 5.223880597014928e-7,),
+ ( 0.0,),
+ ( 4.1744402985074784e-7,),
+ (-1.8621735074626889e-6,),
+ ( 1.049440298507476e-7,),
+ (-1.8621735074626863e-6,),
+ ( 3.1250000000000484e-7,),
+ (-2.500000000000003e-6,),
+ ( 2.0988805970149732e-7,),
+ (-2.4999999999999994e-6,),
+)
+
+#let reactions =(
+    (0.0,),
+ (1250.0,),
+ (   0.0,),
+ (1250.0,),
+ (   0.0,),
+ (   0.0,),
+ (   0.0,),
+ (   0.0,),
+ (   0.0,),
+ (   0.0,),
+ (   0.0,),
+ (   0.0,),
+)
+Thus,
+$
+  U
+  =
+  #array2mat(
+    scalar_matrix_mult(1e6, Ufound)
+  )
+  10^(-6) m
+
+    "     R"
+  =
+  #array2mat(
+    reactions
+  )
+  "kN"
+$
+
+=== (e)
+
+Once the global displacement vector $bold(U)$ is found, the displacement vector for a specific element is recovered using its location vector $bold(ell)^((e))$:
+
+$
+  bold(U)^((e)) = bold(U)(bold(ell)^((e)))
+$
+
+To find the strains and stresses within the element, we evaluate them at the numerical integration points. The strain vector $bold(epsilon)_i$ at an integration point $i$ is obtained by multiplying the strain-displacement matrix $bold(B)_i$ by the element displacement vector. Subsequently, the stress vector $bold(sigma)_i$ is computed using the material's constitutive matrix $bold(D)$:
+
+$
+  bold(epsilon)_i = bold(B)_i bold(U)^((e))
+$
+
+$
+  bold(sigma)_i = bold(D) bold(epsilon)_i
+$
+
+The following script will extract the nodal displacements for element 1, evaluate the $bold(B)$ matrix at its respective integration points, and compute the resulting strain and stress vectors.

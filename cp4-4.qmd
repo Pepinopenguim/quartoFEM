@@ -303,7 +303,7 @@ end
 ```{julia}
 using LinearAlgebra
 
-function K(C, E, ν, h)
+function getK(C, E, ν, h)
     
 
     # for plane stress
@@ -395,7 +395,7 @@ U = [
     0.0 0.0 0.001 0.0 0.002 -0.001 -0.001 -0.001
 ]' #m
 
-k = K(C, E, ν, h)
+k = getK(C, E, ν, h)
 
 F = k * U
 ```
@@ -436,12 +436,17 @@ $
 
 The two-element mesh was designed to simulate self-weight in a structure under plane stress conditions. Each element has dimensions $1 times 1 "m"$. Considering full integration, compute:
 
-a. The stiffness matrix for each element.
-b. The equivalent nodal loads corresponding to the body force.
-c. The global stiffness matrix and the global force vector.
-d. The nodal displacements and reactions.
-e. The strain and stress vectors at the integration points of element 1.
-f. Check if the vertical stress at a lower integration point of element 1 is close to the analytical value $gamma h$.
+*a*. The stiffness matrix for each element.
+
+*b*. The equivalent nodal loads corresponding to the body force.
+
+*c*. The global stiffness matrix and the global force vector.
+
+*d*. The nodal displacements and reactions.
+
+*e*. The strain and stress vectors at the integration points of element 1.
+
+*f*. Check if the vertical stress at a lower integration point of element 1 is close to the analytical value $gamma h$.
 
 #figure(image("448.png", width: 70%), caption: [Two-element mesh simulating self-weight with $E = 20 "GPa"$, $nu = 0.25$, $gamma = 25 "kN/m"^3$, and $"thickness" = 0.2 "m"$])
 
@@ -538,43 +543,45 @@ dNdxi(xi, eta) = [
     dNi(-1,  1)(xi, eta);
 ]
 
-Jacobian(xi, eta) = C' * dNdxi(xi, eta)
-
-# Define stiffness matrix
-# We can use the last problem's function to directly obtain the
-# local stiffness matrix for each element
-
-function get_k(C, E, ν, h)
-
-    # for plane stress (2D problem, with no stress in the z direction)
-    D = [
-        1 ν 0;
-        ν 1 0;
-        0 0 (1 - ν) / 2;
-    ] * E / (1 - ν ^ 2)
-
-    
+Jacobian(C, xi, eta) = C' * dNdxi(xi, eta)
 
 
-    function B(xi, eta)
-        J = Jacobian(xi, eta)
-        dN_dξη = dNdxi(xi, eta)
 
-        # transform derivatives
-        dN_dxdy = dN_dξη * inv(J)
+function get_B(C, xi, eta)
+J = Jacobian(C, xi, eta)
+dN_dξη = dNdxi(xi, eta)
 
-        Bmat = zeros(3, 8)
+# transform derivatives
+dN_dxdy = dN_dξη * inv(J)
 
-        for (i, (dx, dy)) in enumerate(eachrow(dN_dxdy))
-            Bmat[:, 2i-1:2i] .= [
-                dx 0
-                0  dy
-                dy dx
-            ]
-        end
+Bmat = zeros(3, 8)
 
-        return Bmat
-    end 
+for (i, (dx, dy)) in enumerate(eachrow(dN_dxdy))
+    Bmat[:, 2i-1:2i] .= [
+        dx 0
+        0  dy
+        dy dx
+    ]
+end
+
+return Bmat
+end 
+
+
+# for plane stress (2D problem, with no stress in the z direction)
+get_D(E, ν) = [
+    1 ν 0;
+    ν 1 0;
+    0 0 (1 - ν) / 2;
+] * E / (1 - ν ^ 2)
+
+
+quad_2 = [
+    (-1 / sqrt(3), 1.0),
+    ( 1 / sqrt(3), 1.0)
+]
+
+function get_k(C, D, h)
 
     quad_2 = [
         (-1 / sqrt(3), 1.0),
@@ -586,7 +593,8 @@ function get_k(C, E, ν, h)
     # final integration
     for (xi, wi) in quad_2
         for (eta, wj) in quad_2
-            result += h * B(xi, eta)' * D * B(xi, eta) * det(Jacobian(xi, eta)) * wi * wj 
+            B = get_B(C, xi, eta)
+            result += h * B' * D * B * det(Jacobian(C, xi, eta)) * wi * wj 
         end
     end
 
@@ -606,58 +614,491 @@ C2 = [
     1 2;
     0 2;
 ]
-# let lowercase k be the element's (non global) stiffness matrix
-k1 = get_k(C1, E, ν, h) 
-k2 = get_k(C2, E, ν, h) 
 
-println("===== Results =====")
-println("K1 = ")
-println(k2)
-println("K2 = ")
-println(k2)
+k1 = get_k(C1, get_D(E, ν), h) 
+k2 = get_k(C2, get_D(E, ν), h) 
 ```
-
 
 ```{=typst}
 
+
+#let littlek = (
+( 1.95556e9,  6.66667e8, -1.15556e9, -1.33333e8, -9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8 ),
+( 6.66667e8,  1.95556e9,  1.33333e8,  1.77778e8, -6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9 ),
+(-1.15556e9,  1.33333e8,  1.95556e9, -6.66667e8,  1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8 ),
+(-1.33333e8,  1.77778e8, -6.66667e8,  1.95556e9,  1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8 ),
+(-9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8,  1.95556e9,  6.66667e8, -1.15556e9, -1.33333e8 ),
+(-6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9,  6.66667e8,  1.95556e9,  1.33333e8,  1.77778e8 ),
+( 1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8, -1.15556e9,  1.33333e8,  1.95556e9, -6.66667e8 ),
+( 1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8, -1.33333e8,  1.77778e8, -6.66667e8,  1.95556e9 )
+)
+
+
+Thus, 
+
+#{
+  set text(9pt)
+$
+  k_1 ^((e)) = k_2 ^((e)) =
+  #array2mat(scalar_matrix_mult(1e-9, littlek))
+  10^(-9)
+$
+}
+```
+
+```{=typst}
+=== (b)
+
+Next, we determine the equivalent nodal loads corresponding to the body force (self-weight). From the right side of the virtual work equation #ref(<smallboy>), the external virtual work due to body forces is:
+
+$
+  delta W_("ext", b) = integral_(bold(Omega)^((e))) delta bold(u) dot bold(b) "dV"
+$
+
+Substituting the virtual displacement interpolation $delta bold(u) = bold(N) delta bold(U)^((e))$, we get:
+
+$
+  delta W_("ext", b) = (delta bold(U)^((e)))^T integral_(bold(Omega)^((e))) bold(N)^T bold(b) "dV"
+$
+
+Equating this to the work done by the discrete equivalent nodal forces, $(delta bold(U)^((e)))^T bold(F)_b^((e))$, we obtain the fundamental expression for the element body force vector:
+
+$
+  bold(F)_b^((e)) = integral_(bold(Omega)^((e))) bold(N)^T bold(b) "dV"
+$
+
+For a 2D plane stress element with thickness $h$, mapping the volume differential to the natural coordinates $(xi, eta)$ yields:
+
+$
+  bold(F)_b^((e)) = h integral_(-1)^(1) integral_(-1)^(1) bold(N)^T bold(b) J "d"xi "d"eta
+$
+
+Since the structure is subjected to self-weight, the body force vector acts purely in the vertical direction, meaning $bold(b) = mat(0; -gamma)$. The following script will evaluate this integral numerically to compute the equivalent load vector for each element.
 ```
 
 ```{julia}
 
+function body_force(C, γ, h)
+    N_matrix(xi, eta) = hcat(
+        [N(xi, eta)[i]*Matrix(1I, 2, 2) for i in 1:4]...
+    )
+
+    # assuming b will always be applied by gravity
+    b = γ * [0;-1]
+
+    # functions are bilinear (2x2)
+
+
+
+    result = zeros(2*4)
+    for (xi, wi) in quad_2
+        for (eta, wj) in quad_2
+            result += N_matrix(xi, eta)' * b * det(Jacobian(C, xi, eta)) * wi * wj
+        end
+    end
+    return result * h
+end
+
+bf1 = body_force(C1, γ, h)
+bf2 = body_force(C2, γ, h)
+
+println([bf1 bf2])
 ```
 
 
 ```{=typst}
 === (c)
+
+After obtaining the individual element stiffness matrices and equivalent load vectors, the next step is to combine them into a single global algebraic system that represents the entire structure. This global system of equations is given by:
+
+$
+  bold(K) bold(U) = bold(F)
+$
+
+The assembly process builds this system by enforcing compatibility between adjacent elements through their shared nodal degrees of freedom. Each element's stiffness matrix $bold(K)^((e))$ and load vector $bold(F)^((e))$ are accumulated into the global stiffness matrix $bold(K)$ and the global force vector $bold(F)$. 
+
+The exact placement of these element contributions into the global system is determined by the element's location vector $ell^((e))$, which maps the element's local degrees of freedom to the correct rows and columns in the global arrays. 
+
+The element will be defined according to the following matrix, that relates the node coordinates with their $"DOF"$:
+
+$
+  mat(
+    0, 0;
+    1, 0;
+    1, 1;
+    0, 1;
+    1, 2;
+    0, 2;
+  )
+  =
+  mat(
+    1, 2;
+    3, 4;
+    5, 6;
+    7, 8;
+    9, 10;
+    11, 12;
+  )
+  =
+  mat(
+    i, i+1
+    ;
+    dots.v, dots.v
+  )
+$
 ```
 
 ```{julia}
 
+global_index_mapper = [
+    Dict(
+    "coords"=> C1,
+    "nodes"=>(1,2,3,4),
+    "k"=>k1,
+    "f"=>bf1
+    ),
+    Dict(
+    "coords"=> C2,
+    "nodes"=>(4,3,5,6),
+    "k"=>k2,
+    "f"=>bf2
+    )
+]
+
+
+
+function assemble_Stiffness(gim)
+    # get dimensions of global stiffness
+    num_nodes = length(Set(n for d in global_index_mapper for n in d["nodes"]))
+
+    K = zeros(2num_nodes, 2num_nodes)
+    F = zeros(2num_nodes)
+
+    for element in gim
+        k, f = element["k"], element["f"]
+        nodes = element["nodes"]
+
+        dofs = Int[]
+
+        for n in nodes
+            push!(dofs, 2n - 1) # ux
+            push!(dofs, 2n )    # uy
+        end
+
+        for i in 1:8
+            gI = dofs[i]
+
+            F[gI] += f[i]
+
+            for j in 1:8
+                gJ = dofs[j]
+                K[gI, gJ] += k[i, j]
+            end
+        end
+        
+    end
+
+    return K, F
+end
+
+K, F = assemble_Stiffness(global_index_mapper)
 ```
 
+
+```{=typst}
+
+
+// AI wrote this bit but the code is mine gimme a break like
+#let K = (
+( 1.95556e9,  6.66667e8, -1.15556e9, -1.33333e8, -9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8,  0.0,        0.0,        0.0,        0.0       ),
+( 6.66667e8,  1.95556e9,  1.33333e8,  1.77778e8, -6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9,  0.0,        0.0,        0.0,        0.0       ),
+(-1.15556e9,  1.33333e8,  1.95556e9, -6.66667e8,  1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8,  0.0,        0.0,        0.0,        0.0       ),
+(-1.33333e8,  1.77778e8, -6.66667e8,  1.95556e9,  1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8,  0.0,        0.0,        0.0,        0.0       ),
+(-9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8,  3.91111e9, -2.38419e-7, -2.31111e9,  2.98023e-8,  1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8),
+(-6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9, -2.38419e-7,  3.91111e9,  0.0,         3.55556e8,  1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8),
+( 1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8, -2.31111e9, -5.96046e-8,  3.91111e9,  2.38419e-7, -9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8),
+( 1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8, -2.98023e-8,  3.55556e8,  2.38419e-7,  3.91111e9, -6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9),
+( 0.0,        0.0,        0.0,        0.0,         1.77778e8,  1.33333e8, -9.77778e8, -6.66667e8,  1.95556e9,  6.66667e8, -1.15556e9, -1.33333e8),
+( 0.0,        0.0,        0.0,        0.0,        -1.33333e8, -1.15556e9, -6.66667e8, -9.77778e8,  6.66667e8,  1.95556e9,  1.33333e8,  1.77778e8),
+( 0.0,        0.0,        0.0,        0.0,        -9.77778e8,  6.66667e8,  1.77778e8, -1.33333e8, -1.15556e9,  1.33333e8,  1.95556e9, -6.66667e8),
+( 0.0,        0.0,        0.0,        0.0,         6.66667e8, -9.77778e8,  1.33333e8, -1.15556e9, -1.33333e8,  1.77778e8, -6.66667e8,  1.95556e9)
+)
+
+Thus:
+
+#let F = (
+    (0.0,),
+  (-6250.0,),
+   (   0.0,),
+(  -6250.0,),
+(      0.0,),
+( -12499.999999999998,),
+(      0.0,),
+( -12499.999999999998,),
+(      0.0,),
+ ( -6249.999999999998,),
+ (     0.0,),
+ ( -6249.999999999998,),
+)
+
+
+#{
+  set text(8pt)
+  $
+    K=
+    #array2mat(scalar_matrix_mult(1e-9, K), digits:2)
+    10^(-9)
+  $
+
+  $
+    F=
+    #array2mat(scalar_matrix_mult(1e-3, F), digits:2)
+    10^(-3) N
+  $
+}
+
+```
 
 ```{=typst}
 === (d)
+
+
+With the global system assembled, we apply the essential boundary conditions to find the unknown nodal displacements and support reactions. This is achieved by partitioning the global system $bold(K) bold(U) = bold(F)$ into free (subscript 1) and constrained (subscript 2) degrees of freedom:
+
+$
+  mat(
+    bold(K)_11, bold(K)_12;
+    bold(K)_21, bold(K)_22
+  )
+  mat(
+    bold(U)_1;
+    bold(U)_2
+  )
+  =
+  mat(
+    bold(F)_1;
+    bold(F)_2
+  )
+$
+
+The unknown displacements $bold(U)_1$ are found by solving the first set of equations:
+
+$
+  bold(U)_1 = bold(K)_11^(-1) (bold(F)_1 - bold(K)_12 bold(U)_2)
+$
+
+Once the displacement field is fully known, the unknown reaction forces $bold(F)_2$ at the supports are recovered using the second set of equations:
+
+$
+  bold(F)_2 = bold(K)_21 bold(U)_1 + bold(K)_22 bold(U)_2
+$
+
+
+Although possible, the realocation of matrices can become very heavy on the computer memory. Another method, much simples programatically, is to enforce the known displacements into the matrix for all given supports, like done in the snipped below
+
 ```
 
 ```{julia}
 
-```
+# true if there is an imposition
+boundary_vector = [
+    true;
+    true;
+    false;
+    true;
+    false;
+    false;
+    false;
+    false;
+    false;
+    false;
+    false;
+    false;
+]
 
+function apply_boundary(boundary_vector, K, F)
+    K_sys, F_sys = copy(K), copy(F)
+    for i in 1:length(F)
+        if boundary_vector[i]
+            K_sys[i, :] .= 0
+            K_sys[:, i] .= 0
+            K_sys[i, i] = 1
+            F_sys[i] = 0
+        end
+    end
+    return K_sys, F_sys
+end
+
+K_sys, F_sys = apply_boundary(boundary_vector, K, F)
+U = K_sys \ F_sys
+
+Reactions = K * U - F
+;
+```
 
 ```{=typst}
+
+#let reactions = (
+   (-1.1368683772161603e-13,),
+   ( 5000.0,),
+   (-1.1368683772161603e-13,),
+   (5000.000000000003,),
+   ( 2.2737367544323206e-13,),
+   (-1.8189894035458565e-12,),
+   ( 0.0,),
+   ( 0.0,),
+   ( 0.0,),
+   (-6.821210263296962e-13,),
+   ( 4.547473508864641e-13,),
+   (-2.2737367544323206e-13,),
+
+)
+
+#let Ufound =(
+(  0.0,),
+(  0.0,),
+(  5.223880597014928e-7,),
+(  0.0,),
+(  4.1744402985074784e-7,),
+( -1.8621735074626889e-6,),
+(  1.049440298507476e-7,),
+( -1.8621735074626863e-6,),
+(  3.1250000000000484e-7,),
+( -2.500000000000003e-6,),
+(  2.0988805970149732e-7,),
+( -2.4999999999999994e-6,),
+)
+Thus,
+$
+  U
+  =
+  #array2mat(
+    scalar_matrix_mult(1e6, Ufound)
+  )
+  10^(-6) m
+
+    "     R"
+  =
+  #array2mat(
+    reactions
+  )
+  "kN"
+$
+
+
+```
+
+```{=typst}
+
 === (e)
+
+Once the global displacement vector $bold(U)$ is found, the displacement vector for a specific element is recovered using its location vector $bold(ell)^((e))$:
+
+$
+  bold(U)^((e)) = bold(U)(bold(ell)^((e)))
+$
+
+To find the strains and stresses within the element, we evaluate them at the numerical integration points. The strain vector $bold(epsilon)_i$ at an integration point $i$ is obtained by multiplying the strain-displacement matrix $bold(B)_i$ by the element displacement vector. Subsequently, the stress vector $bold(sigma)_i$ is computed using the material's constitutive matrix $bold(D)$:
+
+$
+  bold(epsilon)_i = bold(B)_i bold(U)^((e))
+$
+
+$
+  bold(sigma)_i = bold(D) bold(epsilon)_i
+$
+
+The following script will extract the nodal displacements for element 1, evaluate the $bold(B)$ matrix at its respective integration points, and compute the resulting strain and stress vectors.
+
 ```
 
 ```{julia}
+
+function get_strain_and_stress(gim, D, U)
+    quad_2 = [
+        (-1 / sqrt(3), 1.0),
+        ( 1 / sqrt(3), 1.0)
+    ]
+
+    # 3. Get displacements, strains, and stresses for nodes of interest
+    for (elem_idx, d) in enumerate(gim)
+        C = d["coords"]
+        nodes = d["nodes"]
+
+        dofs = Int[]
+
+        for n in nodes
+            push!(dofs, 2n - 1) # ux
+            push!(dofs, 2n )    # uy
+        end
+
+        # Corrected: iterate directly over the values inside `dofs`
+        Ulocal = [U[i] for i in dofs] 
+        d["strains"] = []
+        d["stresses"] = []
+
+        # 4. Loop over integration points to compute Strain and Stress
+        for (xi, wi) in quad_2
+            for (eta, wj) in quad_2
+                
+                # Evaluate B at this integration point
+                B = get_B(C, xi, eta)
+                
+                # Compute strain and stress
+                strain = B * Ulocal
+                stress = D * strain
+
+                push!(d["strains"], (xi, eta) => strain)
+                push!(d["stresses"], (xi, eta) => stress)
+                
+
+            end
+        end
+    end
+end
+
+get_strain_and_stress(global_index_mapper, get_D(E, ν), U)
+
+
+println("---- (ξ, η) => ϵ ----")
+for i in global_index_mapper[1]["strains"]
+    println(i)
+end
+
+println("---- (ξ, η) => σ ----")
+for i in global_index_mapper[1]["stresses"]
+    println(i)
+end;
 
 ```
 
 
 ```{=typst}
 === (f)
+
+Finally, we may compare the analitical solution for the weight of the element, which is simply $sigma = h gamma$
 ```
 
 ```{julia}
 
+# we can use the shape functions to get the
+# coordinates for the lower integration point
+# (ξ, η) = -1/sqrt(3) * (1, 1)
+
+xi_lower, eta_lower = -1/sqrt(3), -1/sqrt(3)
+x, y = C1' * N(xi_lower, eta_lower) 
+depth = 2.0 - y 
+
+analytical_stress = γ * depth
+
+numerical_stress_vector = first(val for (coords, val) in global_index_mapper[1]["stresses"] if coords == (xi_lower, eta_lower))
+
+numerical_sigma_yy = numerical_stress_vector[2]
+
+println("Analytical σ_yy: ", analytical_stress)
+println("Numerical σ_yy:  ", abs(numerical_sigma_yy)) 
+```
+
+```{=typst}
+As we can see, the solutions differ considerably. This may be attributed mainly to the overly generous mesh, which creates errors naturally. 
 ```

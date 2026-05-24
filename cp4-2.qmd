@@ -3,7 +3,9 @@
 
 ```{=typst}
 
+Build the matrix 𝑩 for a three-node bar element with nodal coordinates 𝑥1 , 𝑥2 , and 𝑥3 .
 
+== Solution
 
 It is known that
 

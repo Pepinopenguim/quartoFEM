@@ -1,7 +1,6 @@
 # Theorical Solutions
 
 ```{=typst}
-// Define a 'sol' function for your answers
 #let sol(body) = text(fill: rgb("#1a237e"), body)
 
 
@@ -20,31 +19,66 @@ In which cases the strain tensor is symmetric?
 Why is the stress tensor always symmetric?
 
 #sol[
-  asdf
+  It is a consequence of *conservation of angular momentum*. For example, $sigma_(x y)$ represents the stress acting on the x-axis, pointing to the y direction (and vice-versa). If  $sigma_(x y) != sigma_(y x)$, this would imply the element has no *rotational equilibrium*, which, for the purposes of Linear Elastic analysis for small displacements, is false.
 ]
 
 == Exercise 4.1.3
 
 Why does the classical finite element formulation assume small deformations?
 
+
 #sol[
-  asdf
+The Green-Lagrange strain tensor can be defined as
+
+$
+  bold(E) = 1/2 bold((𝛁_X u + 𝛁_X u^T + 𝛁_X u^T 𝛁_X u))
+$
+
+Which, for small deformations, can be rounded to
+
+$
+  bold(E) approx 1/2 bold((𝛁_X u + 𝛁_X u^T))
+$
+
+Because the quadratic term can be neglected. The approximation above is the basis for linear elastic FEM analysis, and becomes false for fair deformations.
 ]
+
 
 == Exercise 4.1.4
 
 Give examples of typical structures corresponding to each stress state: plane stress, plane strain, and axisymmetric conditions. Provide at least three examples for each case.
 
 #sol[
-  asdf
+  *Plane Stress Conditions*
+  
+  - Thin plates with holes;
+  - Concrete walls, where its thickness is small compared to width and height.
+
+  *Plane Strain Conditions*
+
+  - Gravity dams;
+  - Retaining walls;
+
+  *Axisymmetric Conditions*
+  
+  - Pressure vessels;
+  - Shafts and pipes.
 ]
 
 == Exercise 4.2.1
 
-Explain the role of the strain-displacement matrix $𝑩$ in a finite element formulation.
+Explain the role of the strain-displacement matrix $bold(B)$ in a finite element formulation.
 
 #sol[
-  asdf
+  The strain-displacement matrix $bold(B)$ mathematically maps the discrete nodal displacements of an element to the continuous strain field within its domain. 
+  
+  That is, it relates the *global strains* to the *element's displacements*. 
+  $
+    bold(epsilon) = bold(partial) bold(u) = bold(partial) (bold(N) bold(U)^((e))) = (bold(partial) bold(N)) bold(U)^((e)) = bold(B) bold(U)^((e))
+  $
+  Thus, $bold(B) = bold(partial) bold(N)$ contains the spatial derivatives of the element shape functions.
+
+  It also plays extremely important roles in the stiffness matrix definition and calculation, and represents a way to obtain strains and stresses when the displacements are known.
 ]
 
 == Exercise 4.3.1
@@ -52,7 +86,14 @@ Explain the role of the strain-displacement matrix $𝑩$ in a finite element fo
 What is an equivalent nodal-load vector, and why is it needed in the finite element method?
 
 #sol[
-  asdf
+  An *equivalent nodal-load vector* $bold(F)_("eq")^((e))$ is a discrete vector that represents non-nodal external actions—such as distributed body forces (gravity, self-weight, eletromagnetic forces, that act on the *Volume*), surface tractions (e.g., pressure, friction, that act on the *boundaries*), or thermal stresses—acting on an element as statically equivalent forces acting exclusively at its nodes, calculated via the *Principle of Virtual Work*.
+
+  It is absolutely essential in the Finite Element Method for composing the vector $bold(F)$ at the main FEM linear system ($bold(K U = F)$).
+  
+  $
+    bold(F)_b^((e)) = integral_(Omega^((e))) bold(N)^T bold(b) d V, quad quad bold(F)_t^((e)) = integral_(Gamma_t^((e))) bold(N)^T bold(t) d S
+  $
+  This consistency guarantees that the finite element solution minimizes the potential energy error of the structural system.
 ]
 
 == Exercise 4.3.2
@@ -60,9 +101,10 @@ What is an equivalent nodal-load vector, and why is it needed in the finite elem
 Explain the difference between an externally applied nodal force and a consistent equivalent nodal load obtained from a distributed action.
 
 #sol[
-  asdf
-]
+  *Externally Applied Nodal Force*: This represents a true concentrated action (say a cord that exerts traction in a sufficiently small area) that is applied directly to a specific, existing node in the finite element mesh. (note that it then requires a node at that specific location, during pre-processing). They are directly inserted into the $bold(F)$ vector
 
+  *Consistent Equivalent Nodal Load*: This is a translation of a distributed action that acts over an entire element domain, rather than at a single point. Examples include body forces (like self-weight/gravity acting on volume) or surface tractions (like wind or hydrostatic pressure acting on an element's face). They require the use of integrals to properly "wage" the impacts of the load into each node of the element, which can bring erros if the mesh is not adequate. 
+]
 == Exercise 4.3.3
 
 How do body forces and surface tractions enter the weak form and the element load vector?
