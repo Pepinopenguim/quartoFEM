@@ -87,7 +87,7 @@ Explain the role of the strain-displacement matrix $bold(B)$ in a finite element
 What is an equivalent nodal-load vector, and why is it needed in the finite element method?
 
 #sol[
-  An *equivalent nodal-load vector* $bold(F)_("eq")^((e))$ is a discrete vector that represents non-nodal external actions—such as distributed body forces (gravity, self-weight, eletromagnetic forces, that act on the *Volume*), surface tractions (e.g., pressure, friction, that act on the *boundaries*), or thermal stresses—acting on an element as statically equivalent forces acting exclusively at its nodes, calculated via the *Principle of Virtual Work*.
+  An *equivalent nodal-load vector* $bold(F)_(e q)^((e))$ is a discrete vector that represents non-nodal external actions—such as distributed body forces (gravity, self-weight, eletromagnetic forces, that act on the *Volume*), surface tractions (e.g., pressure, friction, that act on the *boundaries*), or thermal stresses—acting on an element as statically equivalent forces acting exclusively at its nodes, calculated via the *Principle of Virtual Work*.
 
   It is absolutely essential in the Finite Element Method for composing the vector $bold(F)$ at the main FEM linear system ($bold(K U = F)$).
   
@@ -218,7 +218,7 @@ Why can element distortion degrade accuracy even when the interpolation order is
 What is meant by ill-conditioning of the stiffness matrix, and how can it affect the numerical solution?
 
 #sol[
-Ill-conditioning means the stiffness matrix has a very large condition number, reflecting an extreme disparity between its largest and smallest eigenvalues (often due to huge differences in element stiffnesses). This affects the numerical solution by making the system highly sensitive to floating-point round-off errors, which can result in severely inaccurate displacement values or cause iterative solvers to fail to converge.
+  Ill-conditioning means the stiffness matrix has a very large condition number, reflecting an extreme disparity between its largest and smallest eigenvalues (often due to huge differences in element stiffnesses). This affects the numerical solution by making the system highly sensitive to floating-point round-off errors, which can result in severely inaccurate displacement values or cause iterative solvers to fail to converge.
 ]
 
 == Exercise 4.5.6
@@ -226,7 +226,7 @@ Ill-conditioning means the stiffness matrix has a very large condition number, r
 Distinguish between an ill-conditioned stiffness matrix and a singular stiffness matrix.
 
 #sol[
-A singular stiffness matrix has a determinant of exactly zero, meaning it cannot be inverted at all and the structural system has no unique solution (typically indicating unrestrained rigid body motion). An ill-conditioned stiffness matrix is mathematically invertible, but the extreme variation in its numerical values makes the inversion process highly unstable and prone to massive round-off errors.
+  A singular stiffness matrix has a determinant of exactly zero, meaning it cannot be inverted at all and the structural system has no unique solution (typically indicating unrestrained rigid body motion). An ill-conditioned stiffness matrix is mathematically invertible, but the extreme variation in its numerical values makes the inversion process highly unstable and prone to massive round-off errors.
 ]
 
 == Exercise 4.5.7
@@ -234,7 +234,11 @@ A singular stiffness matrix has a determinant of exactly zero, meaning it cannot
 Give four common modeling or formulation errors that can lead to a singular stiffness matrix.
 
 #sol[
-Four common errors include: (1) insufficient boundary conditions that leave the structure with unrestrained rigid body modes; (2) internal mechanisms, such as collinear truss elements without transverse support or unresisted hinges; (3) disconnected elements or unmerged nodes that create floating, independent parts; and (4) missing material or geometric properties (e.g., zero Young's modulus or zero area) yielding zero-stiffness entries.
+Four common errors include:
+- (1) insufficient boundary conditions that leave the structure with unrestrained rigid body modes;
+- (2) internal mechanisms, such as collinear truss elements without transverse support or unresisted hinges;
+- (3) disconnected elements or unmerged nodes that create floating, independent parts;
+- (4) missing material or geometric properties (e.g., zero Young's modulus or zero area) yielding zero-stiffness entries.
 ]
 
 == Exercise 4.5.8
@@ -245,12 +249,18 @@ Why may excessively large penalty parameters create numerical difficulties even 
 Excessively large penalty parameters introduce values into the global stiffness matrix that are many orders of magnitude larger than the actual physical stiffness terms of the elements. This massive disparity causes severe ill-conditioning; during the matrix solution process, floating-point arithmetic limits cause the smaller, genuine physical stiffness data to be truncated or lost entirely, leading to numerical instability and highly inaccurate results.
 ]
 
+
 == Exercise 4.6.1
 
 List five use-cases of multifreedom constraints in finite-element modeling.
 
 #sol[
-  asdf
+Multifreedom constraints (MFCs) are typically used to model situations where a displacement component cannot be prescribed independently. Typical use-cases include:
+1. *Inclined supports*.
+2. *Rigid links or rigid inclusions*.
+3. *Symmetry relations*.
+4. *Tied interfaces*.
+5. *Contact ties*.
 ]
 
 == Exercise 4.6.2
@@ -258,7 +268,17 @@ List five use-cases of multifreedom constraints in finite-element modeling.
 Compare master-slave elimination, the penalty method, and the Lagrange multiplier method for enforcing constraints. State one advantage and one drawback of each.
 
 #sol[
-  asdf
+*Master-slave elimination:*
+- *Advantage:* *Enforces constraints exactly* and does not add new unknowns to the system.
+- *Drawback:* *Implementation becomes complex* for numerous constraints because the global numbering and transformation matrices must be handled consistently.
+
+*Penalty method:*
+- *Advantage:* *Simple to implement* and maintains the positive definiteness of the stiffness matrix without expanding its size.
+- *Drawback:* *Requires an artificial penalty parameter*; excessively large values lead to severe ill-conditioning, while small values fail to strictly enforce the constraint.
+
+*Lagrange multiplier method:*
+- *Advantage:* *Enforces constraints exactly* at the discrete level and computes the exact constraint (reaction) forces automatically as a byproduct.
+- *Drawback:* *Increases the overall size of the global system* by adding new unknowns and makes the matrix indefinite by introducing zero-diagonal blocks, which requires more complex solvers.
 ]
 
 == Exercise 5.1.1
@@ -266,22 +286,9 @@ Compare master-slave elimination, the penalty method, and the Lagrange multiplie
 List four applications for each of the following element types: plate, membrane, shell, and interface.
 
 #sol[
-  asdf
-]
-
-== Exercise 5.1.3
-
-Simplify the 3D formulation for isoparametric beam elements in order to derive the formulation for an isoparametric 2D beam element.
-
-#sol[
-  asdf
-]
-
-== Exercise 5.1.4
-
-Derive the formulation for a 2D interface element.
-
-#sol[
-  asdf
+- *Plate elements:* Slabs, bridge decks, floor panels, and structures where one dimension is much smaller than the other two.
+- *Membrane elements:* Reinforcement sheets, geotextiles, tensile roofs, and embedded reinforcement.
+- *Shell elements:* Pressure vessels, silos, aircraft fuselages, and thin-walled pipes.
+- *Interface elements:* Joints, bonded interfaces, contact zones, and potential crack paths.
 ]
 ```
