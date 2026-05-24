@@ -172,7 +172,7 @@ using LinearAlgebra
 In the symmetric truss below, element 3 is rigid. For the other elements, 𝐸𝐴 = 600 kN. Find all nodal displacements using the Lagrange multiplier method. Consider the length of element 1 equal to 2 m, 𝛼 = 45°, and 𝑃 = 10 kN.
 
 
-#figure(image("463.png", width: 50%), caption: [Truss with inclined rigit element])
+#figure(image("464.png", width: 50%), caption: [Truss with inclined rigit element])
 
 == Solution
 
