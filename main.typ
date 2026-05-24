@@ -82,342 +82,265 @@
   )
 }
 
+#let sol(body) = text(fill: rgb("#1a237e"), body)
+
 // ====================================================================================================
-#set math.equation(numbering: n => [(4.4.8.#n)], supplement: none)
-
-The two-element mesh was designed to simulate self-weight in a structure under plane stress conditions. Each element has dimensions $1 times 1 "m"$. Considering full integration, compute:
-
-*a.* The stiffness matrix for each element.
-
-*b.* The equivalent nodal loads corresponding to the body force.
-
-*c.* The global stiffness matrix and the global force vector.
-
-*d.* The nodal displacements and reactions.
-
-*e.* The strain and stress vectors at the integration points of element 1.
-
-*f.* Check if the vertical stress at a lower integration point of element 1 is close to the analytical value $gamma h$.
-
-#figure(image("448.png", width: 70%), caption: [Two-element mesh simulating self-weight with $E = 20 "GPa"$, $nu = 0.25$, $gamma = 25 "kN/m"^3$, and $"thickness" = 0.2 "m"$])
-
-== Solution
-
-This solution aims to be a review of all ideas presented in the chapters preceding it. Thus, for each cell of julia code, a small definition of all elements will be defined.
-
-------------
-
-=== (a)
-
-First step if to define the elements's stiffness matrix. Well, from the definition of virtual work, which, in simpler terms, relates the effects of deformations and virtual displacements:
-
-$
-  integral_(bold(Omega)^((e))) delta bold(epsilon) dot bold(sigma) "dV" = integral_(bold(Omega)^((e))) delta bold(u) dot bold(b) "dV" + integral_(bold(Gamma)_t^((e))) delta bold(u) dot bold(t) "dS"
-$ <bigboy>
-
-Both strains and virtual displacements can be defined relating to the nodal displacements $delta bold(U)$
-
-$
-  delta bold(u) = bold(N) delta bold(U)^((e))
-$
-
-$
-  delta bold(xi) = bold(B) delta bold(U)^((e))
-$
-
-Which can simplify #ref(<bigboy>) into:
-
-$
-  integral_(bold(Omega)^((e))) bold(B)^T  bold(sigma) "dV"
-  =
-  integral_(bold(Omega)^((e))) bold(N)^T  bold(b) "dV"
-  +
-  integral_(bold(Gamma)_t^((e))) bold(N)^T bold(t) "dS"
-$ <smallboy>
-
-As I see it, #ref(<smallboy>) relates the internal tensions in the body with forces applied to it, let it be internal (like body mass or eletromagnetic forces) or external (standard forces, water pressure, etc.). So, our stiffness matrix is defined in the left side of the equation #ref(<smallboy>).
-
-For *small-strain linear elasticity* we have:
-
-$
-  bold(sigma = D B U^((e)))
-$
-
-Hence,
-
-$
-  integral_(bold(Omega)^((e))) bold(B)^T  bold(sigma) "dV"
-  =
-  (
-  integral_(bold(Omega)^((e))) bold(B)^T  bold(D B) "dV"
-  ) bold(U^((e)))
-  =
-  bold(K^((e)) U^((e)))
-$
-
-The following script will then, as defined by the last problem, calculate $bold(K)$ with the integral defined above:
-
----------------
-
-#let littlek = (
-( 1.95556e9,  6.66667e8, -1.15556e9, -1.33333e8, -9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8 ),
-( 6.66667e8,  1.95556e9,  1.33333e8,  1.77778e8, -6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9 ),
-(-1.15556e9,  1.33333e8,  1.95556e9, -6.66667e8,  1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8 ),
-(-1.33333e8,  1.77778e8, -6.66667e8,  1.95556e9,  1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8 ),
-(-9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8,  1.95556e9,  6.66667e8, -1.15556e9, -1.33333e8 ),
-(-6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9,  6.66667e8,  1.95556e9,  1.33333e8,  1.77778e8 ),
-( 1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8, -1.15556e9,  1.33333e8,  1.95556e9, -6.66667e8 ),
-( 1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8, -1.33333e8,  1.77778e8, -6.66667e8,  1.95556e9 )
-)
-
-Thus, 
-
-#{
-  set text(9pt)
-$
-  k_1 ^((e)) = k_2 ^((e)) =
-  #array2mat(scalar_matrix_mult(1e-9, littlek))
-  10^(-9)
-$
-}
-
-------------
-=== (b)
-
-Next, we determine the equivalent nodal loads corresponding to the body force (self-weight). From the right side of the virtual work equation #ref(<smallboy>), the external virtual work due to body forces is:
-
-$
-  delta W_("ext", b) = integral_(bold(Omega)^((e))) delta bold(u) dot bold(b) "dV"
-$
-
-Substituting the virtual displacement interpolation $delta bold(u) = bold(N) delta bold(U)^((e))$, we get:
-
-$
-  delta W_("ext", b) = (delta bold(U)^((e)))^T integral_(bold(Omega)^((e))) bold(N)^T bold(b) "dV"
-$
-
-Equating this to the work done by the discrete equivalent nodal forces, $(delta bold(U)^((e)))^T bold(F)_b^((e))$, we obtain the fundamental expression for the element body force vector:
-
-$
-  bold(F)_b^((e)) = integral_(bold(Omega)^((e))) bold(N)^T bold(b) "dV"
-$
-
-For a 2D plane stress element with thickness $h$, mapping the volume differential to the natural coordinates $(xi, eta)$ yields:
-
-$
-  bold(F)_b^((e)) = h integral_(-1)^(1) integral_(-1)^(1) bold(N)^T bold(b) J "d"xi "d"eta
-$
-
-Since the structure is subjected to self-weight, the body force vector acts purely in the vertical direction, meaning $bold(b) = mat(0; -gamma)$. The following script will evaluate this integral numerically to compute the equivalent load vector for each element.
-
------------------
-=== (c)
-
-After obtaining the individual element stiffness matrices and equivalent load vectors, the next step is to combine them into a single global algebraic system that represents the entire structure. This global system of equations is given by:
-
-$
-  bold(K) bold(U) = bold(F)
-$
-
-The assembly process builds this system by enforcing compatibility between adjacent elements through their shared nodal degrees of freedom. Each element's stiffness matrix $bold(K)^((e))$ and load vector $bold(F)^((e))$ are accumulated into the global stiffness matrix $bold(K)$ and the global force vector $bold(F)$. 
-
-The exact placement of these element contributions into the global system is determined by the element's location vector $ell^((e))$, which maps the element's local degrees of freedom to the correct rows and columns in the global arrays. 
-
-The element will be defined according to the following matrix, that relates the node coordinates with their $"DOF"$:
-
-$
-  mat(
-    0, 0;
-    1, 0;
-    1, 1;
-    0, 1;
-    1, 2;
-    0, 2;
-  )
-  =
-  mat(
-    1, 2;
-    3, 4;
-    5, 6;
-    7, 8;
-    9, 10;
-    11, 12;
-  )
-  =
-  mat(
-    i, i+1
-    ;
-    dots.v, dots.v
-  )
-$
-
-// AI wrote this bit but the code is mine gimme a break like
-#let K = (
-( 1.95556e9,  6.66667e8, -1.15556e9, -1.33333e8, -9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8,  0.0,        0.0,        0.0,        0.0       ),
-( 6.66667e8,  1.95556e9,  1.33333e8,  1.77778e8, -6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9,  0.0,        0.0,        0.0,        0.0       ),
-(-1.15556e9,  1.33333e8,  1.95556e9, -6.66667e8,  1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8,  0.0,        0.0,        0.0,        0.0       ),
-(-1.33333e8,  1.77778e8, -6.66667e8,  1.95556e9,  1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8,  0.0,        0.0,        0.0,        0.0       ),
-(-9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8,  3.91111e9, -2.38419e-7, -2.31111e9,  2.98023e-8,  1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8),
-(-6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9, -2.38419e-7,  3.91111e9,  0.0,         3.55556e8,  1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8),
-( 1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8, -2.31111e9, -5.96046e-8,  3.91111e9,  2.38419e-7, -9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8),
-( 1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8, -2.98023e-8,  3.55556e8,  2.38419e-7,  3.91111e9, -6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9),
-( 0.0,        0.0,        0.0,        0.0,         1.77778e8,  1.33333e8, -9.77778e8, -6.66667e8,  1.95556e9,  6.66667e8, -1.15556e9, -1.33333e8),
-( 0.0,        0.0,        0.0,        0.0,        -1.33333e8, -1.15556e9, -6.66667e8, -9.77778e8,  6.66667e8,  1.95556e9,  1.33333e8,  1.77778e8),
-( 0.0,        0.0,        0.0,        0.0,        -9.77778e8,  6.66667e8,  1.77778e8, -1.33333e8, -1.15556e9,  1.33333e8,  1.95556e9, -6.66667e8),
-( 0.0,        0.0,        0.0,        0.0,         6.66667e8, -9.77778e8,  1.33333e8, -1.15556e9, -1.33333e8,  1.77778e8, -6.66667e8,  1.95556e9)
-)
-
------------
-
-// AI wrote this bit but the code is mine gimme a break like
-#let K = (
-( 1.95556e9,  6.66667e8, -1.15556e9, -1.33333e8, -9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8,  0.0,        0.0,        0.0,        0.0       ),
-( 6.66667e8,  1.95556e9,  1.33333e8,  1.77778e8, -6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9,  0.0,        0.0,        0.0,        0.0       ),
-(-1.15556e9,  1.33333e8,  1.95556e9, -6.66667e8,  1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8,  0.0,        0.0,        0.0,        0.0       ),
-(-1.33333e8,  1.77778e8, -6.66667e8,  1.95556e9,  1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8,  0.0,        0.0,        0.0,        0.0       ),
-(-9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8,  3.91111e9, -2.38419e-7, -2.31111e9,  2.98023e-8,  1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8),
-(-6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9, -2.38419e-7,  3.91111e9,  0.0,         3.55556e8,  1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8),
-( 1.77778e8, -1.33333e8, -9.77778e8,  6.66667e8, -2.31111e9, -5.96046e-8,  3.91111e9,  2.38419e-7, -9.77778e8, -6.66667e8,  1.77778e8,  1.33333e8),
-( 1.33333e8, -1.15556e9,  6.66667e8, -9.77778e8, -2.98023e-8,  3.55556e8,  2.38419e-7,  3.91111e9, -6.66667e8, -9.77778e8, -1.33333e8, -1.15556e9),
-( 0.0,        0.0,        0.0,        0.0,         1.77778e8,  1.33333e8, -9.77778e8, -6.66667e8,  1.95556e9,  6.66667e8, -1.15556e9, -1.33333e8),
-( 0.0,        0.0,        0.0,        0.0,        -1.33333e8, -1.15556e9, -6.66667e8, -9.77778e8,  6.66667e8,  1.95556e9,  1.33333e8,  1.77778e8),
-( 0.0,        0.0,        0.0,        0.0,        -9.77778e8,  6.66667e8,  1.77778e8, -1.33333e8, -1.15556e9,  1.33333e8,  1.95556e9, -6.66667e8),
-( 0.0,        0.0,        0.0,        0.0,         6.66667e8, -9.77778e8,  1.33333e8, -1.15556e9, -1.33333e8,  1.77778e8, -6.66667e8,  1.95556e9)
-)
-
-Thus:
-
-#let F = (
-    (0.0,),
-  (-6250.0,),
-   (   0.0,),
-(  -6250.0,),
-(      0.0,),
-( -12499.999999999998,),
-(      0.0,),
-( -12499.999999999998,),
-(      0.0,),
- ( -6249.999999999998,),
- (     0.0,),
- ( -6249.999999999998,),
-)
 
 
-#{
-  set text(8pt)
-  $
-    K=
-    #array2mat(scalar_matrix_mult(1e-9, K), digits:2)
-    10^(-9)
-  $
+== Exercise 4.1.3
+
+Why does the classical finite element formulation assume small deformations?
+
+
+#sol[
+  The Green-Lagrange strain tensor can be defined as
 
   $
-    F=
-    #array2mat(scalar_matrix_mult(1e-3, F), digits:2)
-    10^(-3) N
+    bold(E) = 1/2 bold((𝛁_X u + 𝛁_X u^T + 𝛁_X u^T 𝛁_X u))
   $
-}
+
+  Which, for small deformations, can be rounded to
+
+  $
+    bold(E) approx 1/2 bold((𝛁_X u + 𝛁_X u^T))
+  $
+
+  Because the quadratic term can be neglected. The approximation above is the basis for linear elastic FEM analysis, and becomes false for fair deformations.
+]
 
 
-=== (d)
+== Exercise 4.1.4
 
-With the global system assembled, we apply the essential boundary conditions to find the unknown nodal displacements and support reactions. This is achieved by partitioning the global system $bold(K) bold(U) = bold(F)$ into free (subscript 1) and constrained (subscript 2) degrees of freedom:
+Give examples of typical structures corresponding to each stress state: plane stress, plane strain, and axisymmetric conditions. Provide at least three examples for each case.
 
-$
-  mat(
-    bold(K)_11, bold(K)_12;
-    bold(K)_21, bold(K)_22
-  )
-  mat(
-    bold(U)_1;
-    bold(U)_2
-  )
-  =
-  mat(
-    bold(F)_1;
-    bold(F)_2
-  )
-$
+#sol[
+  *Plane Stress Conditions*
+  
+  - Thin plates with holes;
+  - Concrete walls, where its thickness is small compared to width and height.
 
-The unknown displacements $bold(U)_1$ are found by solving the first set of equations:
+  *Plane Strain Conditions*
 
-$
-  bold(U)_1 = bold(K)_11^(-1) (bold(F)_1 - bold(K)_12 bold(U)_2)
-$
+  - Gravity dams;
+  - Retaining walls;
 
-Once the displacement field is fully known, the unknown reaction forces $bold(F)_2$ at the supports are recovered using the second set of equations:
+  *Axisymmetric Conditions*
+  
+  - Pressure vessels;
+  - Shafts and pipes.
+]
 
-$
-  bold(F)_2 = bold(K)_21 bold(U)_1 + bold(K)_22 bold(U)_2
-$
+== Exercise 4.2.1
 
-Although possible, the realocation of matrices can become very heavy on the computer memory. Another method, much simples programatically, is to enforce the known displacements into the matrix for all given supports, like done in the snipped below
+Explain the role of the strain-displacement matrix $bold(B)$ in a finite element formulation.
+
+#sol[
+  The strain-displacement matrix $bold(B)$ mathematically maps the discrete nodal displacements of an element to the continuous strain field within its domain. 
+  
+  That is, it relates the *global strains* to the *element's displacements*. 
+  $
+    bold(epsilon) = bold(partial) bold(u) = bold(partial) (bold(N) bold(U)^((e))) = (bold(partial) bold(N)) bold(U)^((e)) = bold(B) bold(U)^((e))
+  $
+  Thus, $bold(B) = bold(partial) bold(N)$ contains the spatial derivatives of the element shape functions.
+
+  It also plays extremely important roles in the stiffness matrix definition and calculation, and represents a way to obtain strains and stresses when the displacements are known.
+]
+
+== Exercise 4.3.1
+
+What is an equivalent nodal-load vector, and why is it needed in the finite element method?
+
+#sol[
+  An *equivalent nodal-load vector* $bold(F)_("eq")^((e))$ is a discrete vector that represents non-nodal external actions—such as distributed body forces (gravity, self-weight, eletromagnetic forces, that act on the *Volume*), surface tractions (e.g., pressure, friction, that act on the *boundaries*), or thermal stresses—acting on an element as statically equivalent forces acting exclusively at its nodes, calculated via the *Principle of Virtual Work*.
+
+  It is absolutely essential in the Finite Element Method for composing the vector $bold(F)$ at the main FEM linear system ($bold(K U = F)$).
+  
+  $
+    bold(F)_b^((e)) = integral_(Omega^((e))) bold(N)^T bold(b) d V, quad quad bold(F)_t^((e)) = integral_(Gamma_t^((e))) bold(N)^T bold(t) d S
+  $
+  This consistency guarantees that the finite element solution minimizes the potential energy error of the structural system.
+]
+
+== Exercise 4.3.2
+
+Explain the difference between an externally applied nodal force and a consistent equivalent nodal load obtained from a distributed action.
+
+#sol[
+  *Externally Applied Nodal Force*: This represents a true concentrated action (say a cord that exerts traction in a sufficiently small area) that is applied directly to a specific, existing node in the finite element mesh. (note that it then requires a node at that specific location, during pre-processing). They are directly inserted into the $bold(F)$ vector
+
+  *Consistent Equivalent Nodal Load*: This is a translation of a distributed action that acts over an entire element domain, rather than at a single point. Examples include body forces (like self-weight/gravity acting on volume) or surface tractions (like wind or hydrostatic pressure acting on an element's face). They require the use of integrals to properly "wage" the impacts of the load into each node of the element, which can bring erros if the mesh is not adequate. 
+]
+
+== Exercise 4.3.3
+
+How do body forces and surface tractions enter the weak form and the element load vector?
+
+#sol[
+  - *body forces*
+    - Body forces are applied to the element's volume (via the material's $gamma$ property, that relates force per volume element). Thus, they are calculated via the following integral:
+    $
+      F_(b f) = integral_(bold(Omega^((e)))) bold(N)^T bold(b) d V
+    $
+    Where $bold(N)$ is the shape functions matrix, and $bold(b)$ the force factor each element of volume applies to the element.
+
+  - *surface tractions*
+    - Surface tractions, on the other hand, are applied to the element's surfaces, that is, they are external to the element, and represent actions done by other structures onto the Dominium of analysis $bold(Omega^((e)))$. These applied forces are defined by the traction vector $bold(t)$ They can be calculated by
+    $
+      F_(t) = integral_(bold(Gamma^((e)))) bold(N)^T bold(t) d S
+    $
+
+  As we can see, the shape functions matrix, defined as 
+
+  $
+    bold(N) = [N_1 bold(I), N_2 bold(I), N_3 bold(I), dots.h, N_i bold(I)]
+  $
+
+  Is the key to make the distribution of otherwise unknown forces into nodal forces
+]
+
+== Exercise 4.4.1
+
+What is full and reduced integration in the computation of the stiffness matrix?
+
+#sol[
+  - *Full Integration*: This refers to using the standard or mathematically required number of integration points (Gauss points) to integrate the terms in the stiffness matrix exactly (or up to the degree of exactness required by the order of the interpolating polynomial). As seen, a n number gaussian quadrature will perfectly solve polynomials of up to $2n - 1$ degree
+  - *Reduced Integration*: This technique uses a lower number of integration points than what is required for full integration, which reduces computacional time at the cost of accuracy. Note that as shown in the Numerical issues section, because of shear locking, reduced integrations can approximate to the real solution better. 
+]
+
+== Exercise 4.4.2
+
+What are the connectivity and location vectors of an element, and how are they used in the assembly process?
+
+#sol[
+  The connectivity vector maps an element's local nodes to their global node numbers, defining structural topology. The location vector (LM) maps the element's local degrees of freedom (DOFs) directly to their corresponding global DOF indices. In the assembly process, the location vector acts as an indexing guide to distribute and superimpose the local element stiffness terms ($bold(K)^((e))$) into the correct rows and columns of the global stiffness matrix ($bold(K)^((g))$) using the principle of superposition.
+]
+
+== Exercise 4.4.3
+
+What is the equilibrium residual, and why must it vanish only at free degrees of freedom?
+
+#sol[
+  The equilibrium residual is the difference between external and internal forces, which, for a converged static solution, should be null at free degrees of freedom. Such As
+
+  $
+    R = F_"ext" - F_"int" "    " R_"fdof" approx 0
+  $
+
+  If the residual at a free degree of
+  freedom is not small, the finite-element equations have not been satisfied there. For a linear elastic analysis, this indicates an inconsistent load vector, or incorrect assembly of stiffness matrix.
 
 
---------
+]
 
-#let Ufound = (
- (    0.0,),
- ( 0.0,),
- ( 5.223880597014928e-7,),
- ( 0.0,),
- ( 4.1744402985074784e-7,),
- (-1.8621735074626889e-6,),
- ( 1.049440298507476e-7,),
- (-1.8621735074626863e-6,),
- ( 3.1250000000000484e-7,),
- (-2.500000000000003e-6,),
- ( 2.0988805970149732e-7,),
- (-2.4999999999999994e-6,),
-)
+== Exercise 4.4.4
 
-#let reactions =(
-    (0.0,),
- (1250.0,),
- (   0.0,),
- (1250.0,),
- (   0.0,),
- (   0.0,),
- (   0.0,),
- (   0.0,),
- (   0.0,),
- (   0.0,),
- (   0.0,),
- (   0.0,),
-)
-Thus,
-$
-  U
-  =
-  #array2mat(
-    scalar_matrix_mult(1e6, Ufound)
-  )
-  10^(-6) m
+How are support reactions recovered after the displacement field has been computed?
 
-    "     R"
-  =
-  #array2mat(
-    reactions
-  )
-  "kN"
-$
+#sol[
+  Support reactions are obtained with the residual, as seen in the last problem. Supports are restricted degrees of freedom, and their reactions represent the necessary conditions to maintain mechanical equilibrium through the element. Thus, the reaction vector can be defined as 
 
-=== (e)
+  $
+    bold(r)_c = bold(F)_"int"_c - bold(F)_"ext"_c
+  $
+]
 
-Once the global displacement vector $bold(U)$ is found, the displacement vector for a specific element is recovered using its location vector $bold(ell)^((e))$:
+== Exercise 4.5.1
 
-$
-  bold(U)^((e)) = bold(U)(bold(ell)^((e)))
-$
+Explain the origin of shear locking and volumetric locking, and indicate in which types of problems each one is most likely to appear.
 
-To find the strains and stresses within the element, we evaluate them at the numerical integration points. The strain vector $bold(epsilon)_i$ at an integration point $i$ is obtained by multiplying the strain-displacement matrix $bold(B)_i$ by the element displacement vector. Subsequently, the stress vector $bold(sigma)_i$ is computed using the material's constitutive matrix $bold(D)$:
+#sol[
+  - *Shear locking* arises when structural elements (like Timoshenko beams or Mindlin plates) cannot undergo pure bending without generating parasitic shear strains, causing the element to behave with artificial stiffness. It is most common in very thin or slender elements.
+  - *Volumetric locking* occurs when elements cannot properly represent isochoric (volume-preserving) deformations without generating spurious volumetric strains. It typically appears in problems involving nearly incompressible materials (e.g., rubber, where Poisson's ratio approaches 0.5) or in fully plastic deformation scenarios.
+]
 
-$
-  bold(epsilon)_i = bold(B)_i bold(U)^((e))
-$
+== Exercise 4.5.2 <locking>
 
-$
-  bold(sigma)_i = bold(D) bold(epsilon)_i
-$
+Why can reduced integration alleviate locking, and what numerical risk does it introduce?
 
-The following script will extract the nodal displacements for element 1, evaluate the $bold(B)$ matrix at its respective integration points, and compute the resulting strain and stress vectors.
+#sol[
+  Reduced integration evaluates the specific terms causing artificial stiffness (such as transverse shear or volumetric strain energy) at fewer integration points, effectively relaxing the overly strict kinematic constraints. However, the numerical risk it introduces is rank deficiency in the stiffness matrix. This can allow non-physical, zero-energy deformation modes to develop and entirely corrupt the numerical solution.
+]
+
+== Exercise 4.5.3
+
+What are hourglass modes, and why are they associated with underintegrated elements?
+
+#sol[
+  Hourglass modes are spurious, non-physical deformation patterns that produce zero strain at the integration points, meaning the element deforms without storing any strain energy. They are uniquely associated with underintegrated elements because the reduced number of Gauss points fails to detect the strains generated by these specific zig-zag or warping shapes, resulting in zero stiffness being assigned to those modes.
+]
+
+== Exercise 4.5.4
+
+Why can element distortion degrade accuracy even when the interpolation order is unchanged?
+
+#sol[
+  Severe element distortion alters the mapping between the natural (parametric) and physical coordinate systems, causing the Jacobian determinant to vary drastically across the element or approach zero. This poor mapping skews the shape function derivatives and drastically degrades the accuracy of the numerical integration, leading to significant discretization errors regardless of the element's theoretical polynomial order.
+]
+
+== Exercise 4.5.5
+
+What is meant by ill-conditioning of the stiffness matrix, and how can it affect the numerical solution?
+
+#sol[
+  Ill-conditioning means the stiffness matrix has a very large condition number, reflecting an extreme disparity between its largest and smallest eigenvalues (often due to huge differences in element stiffnesses). This affects the numerical solution by making the system highly sensitive to floating-point round-off errors, which can result in severely inaccurate displacement values or cause iterative solvers to fail to converge.
+]
+
+== Exercise 4.5.6
+
+Distinguish between an ill-conditioned stiffness matrix and a singular stiffness matrix.
+
+#sol[
+  A singular stiffness matrix has a determinant of exactly zero, meaning it cannot be inverted at all and the structural system has no unique solution (typically indicating unrestrained rigid body motion). An ill-conditioned stiffness matrix is mathematically invertible, but the extreme variation in its numerical values makes the inversion process highly unstable and prone to massive round-off errors.
+]
+
+== Exercise 4.5.7
+
+Give four common modeling or formulation errors that can lead to a singular stiffness matrix.
+
+#sol[
+Four common errors include:
+- (1) insufficient boundary conditions that leave the structure with unrestrained rigid body modes;
+- (2) internal mechanisms, such as collinear truss elements without transverse support or unresisted hinges;
+- (3) disconnected elements or unmerged nodes that create floating, independent parts;
+- (4) missing material or geometric properties (e.g., zero Young's modulus or zero area) yielding zero-stiffness entries.
+]
+
+== Exercise 4.5.8
+
+Why may excessively large penalty parameters create numerical difficulties even though they enforce constraints more strongly?
+
+#sol[
+Excessively large penalty parameters introduce values into the global stiffness matrix that are many orders of magnitude larger than the actual physical stiffness terms of the elements. This massive disparity causes severe ill-conditioning; during the matrix solution process, floating-point arithmetic limits cause the smaller, genuine physical stiffness data to be truncated or lost entirely, leading to numerical instability and highly inaccurate results.
+]
+
+== Exercise 4.6.1
+
+List five use-cases of multifreedom constraints in finite-element modeling.
+
+#sol[
+  asdf
+]
+
+== Exercise 4.6.2
+
+Compare master-slave elimination, the penalty method, and the Lagrange multiplier method for enforcing constraints. State one advantage and one drawback of each.
+
+#sol[
+  asdf
+]
+
+== Exercise 5.1.1
+
+List four applications for each of the following element types: plate, membrane, shell, and interface.
+
+#sol[
+  asdf
+]
+
+== Exercise 5.1.4
+
+Derive the formulation for a 2D interface element.
+
+#sol[
+  asdf
+]

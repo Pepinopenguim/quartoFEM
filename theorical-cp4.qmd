@@ -22,25 +22,26 @@ Why is the stress tensor always symmetric?
   It is a consequence of *conservation of angular momentum*. For example, $sigma_(x y)$ represents the stress acting on the x-axis, pointing to the y direction (and vice-versa). If  $sigma_(x y) != sigma_(y x)$, this would imply the element has no *rotational equilibrium*, which, for the purposes of Linear Elastic analysis for small displacements, is false.
 ]
 
+
 == Exercise 4.1.3
 
 Why does the classical finite element formulation assume small deformations?
 
 
 #sol[
-The Green-Lagrange strain tensor can be defined as
+  The Green-Lagrange strain tensor can be defined as
 
-$
-  bold(E) = 1/2 bold((𝛁_X u + 𝛁_X u^T + 𝛁_X u^T 𝛁_X u))
-$
+  $
+    bold(E) = 1/2 bold((𝛁_X u + 𝛁_X u^T + 𝛁_X u^T 𝛁_X u))
+  $
 
-Which, for small deformations, can be rounded to
+  Which, for small deformations, can be rounded to
 
-$
-  bold(E) approx 1/2 bold((𝛁_X u + 𝛁_X u^T))
-$
+  $
+    bold(E) approx 1/2 bold((𝛁_X u + 𝛁_X u^T))
+  $
 
-Because the quadratic term can be neglected. The approximation above is the basis for linear elastic FEM analysis, and becomes false for fair deformations.
+  Because the quadratic term can be neglected. The approximation above is the basis for linear elastic FEM analysis, and becomes false for fair deformations.
 ]
 
 
@@ -105,12 +106,32 @@ Explain the difference between an externally applied nodal force and a consisten
 
   *Consistent Equivalent Nodal Load*: This is a translation of a distributed action that acts over an entire element domain, rather than at a single point. Examples include body forces (like self-weight/gravity acting on volume) or surface tractions (like wind or hydrostatic pressure acting on an element's face). They require the use of integrals to properly "wage" the impacts of the load into each node of the element, which can bring erros if the mesh is not adequate. 
 ]
+
 == Exercise 4.3.3
 
 How do body forces and surface tractions enter the weak form and the element load vector?
 
 #sol[
-  asdf
+  - *body forces*
+    - Body forces are applied to the element's volume (via the material's $gamma$ property, that relates force per volume element). Thus, they are calculated via the following integral:
+    $
+      F_(b f) = integral_(bold(Omega^((e)))) bold(N)^T bold(b) d V
+    $
+    Where $bold(N)$ is the shape functions matrix, and $bold(b)$ the force factor each element of volume applies to the element.
+
+  - *surface tractions*
+    - Surface tractions, on the other hand, are applied to the element's surfaces, that is, they are external to the element, and represent actions done by other structures onto the Dominium of analysis $bold(Omega^((e)))$. These applied forces are defined by the traction vector $bold(t)$ They can be calculated by
+    $
+      F_(t) = integral_(bold(Gamma^((e)))) bold(N)^T bold(t) d S
+    $
+
+  As we can see, the shape functions matrix, defined as 
+
+  $
+    bold(N) = [N_1 bold(I), N_2 bold(I), N_3 bold(I), dots.h, N_i bold(I)]
+  $
+
+  Is the key to make the distribution of otherwise unknown forces into nodal forces
 ]
 
 == Exercise 4.4.1
@@ -118,7 +139,8 @@ How do body forces and surface tractions enter the weak form and the element loa
 What is full and reduced integration in the computation of the stiffness matrix?
 
 #sol[
-  asdf
+  - *Full Integration*: This refers to using the standard or mathematically required number of integration points (Gauss points) to integrate the terms in the stiffness matrix exactly (or up to the degree of exactness required by the order of the interpolating polynomial). As seen, a n number gaussian quadrature will perfectly solve polynomials of up to $2n - 1$ degree
+  - *Reduced Integration*: This technique uses a lower number of integration points than what is required for full integration, which reduces computacional time at the cost of accuracy. Note that as shown in the Numerical issues section, because of shear locking, reduced integrations can approximate to the real solution better. 
 ]
 
 == Exercise 4.4.2
@@ -126,7 +148,7 @@ What is full and reduced integration in the computation of the stiffness matrix?
 What are the connectivity and location vectors of an element, and how are they used in the assembly process?
 
 #sol[
-  asdf
+  The connectivity vector maps an element's local nodes to their global node numbers, defining structural topology. The location vector (LM) maps the element's local degrees of freedom (DOFs) directly to their corresponding global DOF indices. In the assembly process, the location vector acts as an indexing guide to distribute and superimpose the local element stiffness terms ($bold(K)^((e))$) into the correct rows and columns of the global stiffness matrix ($bold(K)^((g))$) using the principle of superposition.
 ]
 
 == Exercise 4.4.3
@@ -134,7 +156,16 @@ What are the connectivity and location vectors of an element, and how are they u
 What is the equilibrium residual, and why must it vanish only at free degrees of freedom?
 
 #sol[
-  asdf
+  The equilibrium residual is the difference between external and internal forces, which, for a converged static solution, should be null at free degrees of freedom. Such As
+
+  $
+    R = F_"ext" - F_"int" "    " R_"fdof" approx 0
+  $
+
+  If the residual at a free degree of
+  freedom is not small, the finite-element equations have not been satisfied there. For a linear elastic analysis, this indicates an inconsistent load vector, or incorrect assembly of stiffness matrix.
+
+
 ]
 
 == Exercise 4.4.4
@@ -142,7 +173,11 @@ What is the equilibrium residual, and why must it vanish only at free degrees of
 How are support reactions recovered after the displacement field has been computed?
 
 #sol[
-  asdf
+  Support reactions are obtained with the residual, as seen in the last problem. Supports are restricted degrees of freedom, and their reactions represent the necessary conditions to maintain mechanical equilibrium through the element. Thus, the reaction vector can be defined as 
+
+  $
+    bold(r)_c = bold(F)_"int"_c - bold(F)_"ext"_c
+  $
 ]
 
 == Exercise 4.5.1
@@ -150,15 +185,16 @@ How are support reactions recovered after the displacement field has been comput
 Explain the origin of shear locking and volumetric locking, and indicate in which types of problems each one is most likely to appear.
 
 #sol[
-  asdf
+  - *Shear locking* arises when structural elements (like Timoshenko beams or Mindlin plates) cannot undergo pure bending without generating parasitic shear strains, causing the element to behave with artificial stiffness. It is most common in very thin or slender elements.
+  - *Volumetric locking* occurs when elements cannot properly represent isochoric (volume-preserving) deformations without generating spurious volumetric strains. It typically appears in problems involving nearly incompressible materials (e.g., rubber, where Poisson's ratio approaches 0.5) or in fully plastic deformation scenarios.
 ]
 
-== Exercise 4.5.2
+== Exercise 4.5.2 <locking>
 
 Why can reduced integration alleviate locking, and what numerical risk does it introduce?
 
 #sol[
-  asdf
+  Reduced integration evaluates the specific terms causing artificial stiffness (such as transverse shear or volumetric strain energy) at fewer integration points, effectively relaxing the overly strict kinematic constraints. However, the numerical risk it introduces is rank deficiency in the stiffness matrix. This can allow non-physical, zero-energy deformation modes to develop and entirely corrupt the numerical solution.
 ]
 
 == Exercise 4.5.3
@@ -166,7 +202,7 @@ Why can reduced integration alleviate locking, and what numerical risk does it i
 What are hourglass modes, and why are they associated with underintegrated elements?
 
 #sol[
-  asdf
+  Hourglass modes are spurious, non-physical deformation patterns that produce zero strain at the integration points, meaning the element deforms without storing any strain energy. They are uniquely associated with underintegrated elements because the reduced number of Gauss points fails to detect the strains generated by these specific zig-zag or warping shapes, resulting in zero stiffness being assigned to those modes.
 ]
 
 == Exercise 4.5.4
@@ -174,7 +210,7 @@ What are hourglass modes, and why are they associated with underintegrated eleme
 Why can element distortion degrade accuracy even when the interpolation order is unchanged?
 
 #sol[
-  asdf
+  Severe element distortion alters the mapping between the natural (parametric) and physical coordinate systems, causing the Jacobian determinant to vary drastically across the element or approach zero. This poor mapping skews the shape function derivatives and drastically degrades the accuracy of the numerical integration, leading to significant discretization errors regardless of the element's theoretical polynomial order.
 ]
 
 == Exercise 4.5.5
@@ -182,7 +218,7 @@ Why can element distortion degrade accuracy even when the interpolation order is
 What is meant by ill-conditioning of the stiffness matrix, and how can it affect the numerical solution?
 
 #sol[
-  asdf
+Ill-conditioning means the stiffness matrix has a very large condition number, reflecting an extreme disparity between its largest and smallest eigenvalues (often due to huge differences in element stiffnesses). This affects the numerical solution by making the system highly sensitive to floating-point round-off errors, which can result in severely inaccurate displacement values or cause iterative solvers to fail to converge.
 ]
 
 == Exercise 4.5.6
@@ -190,7 +226,7 @@ What is meant by ill-conditioning of the stiffness matrix, and how can it affect
 Distinguish between an ill-conditioned stiffness matrix and a singular stiffness matrix.
 
 #sol[
-  asdf
+A singular stiffness matrix has a determinant of exactly zero, meaning it cannot be inverted at all and the structural system has no unique solution (typically indicating unrestrained rigid body motion). An ill-conditioned stiffness matrix is mathematically invertible, but the extreme variation in its numerical values makes the inversion process highly unstable and prone to massive round-off errors.
 ]
 
 == Exercise 4.5.7
@@ -198,7 +234,7 @@ Distinguish between an ill-conditioned stiffness matrix and a singular stiffness
 Give four common modeling or formulation errors that can lead to a singular stiffness matrix.
 
 #sol[
-  asdf
+Four common errors include: (1) insufficient boundary conditions that leave the structure with unrestrained rigid body modes; (2) internal mechanisms, such as collinear truss elements without transverse support or unresisted hinges; (3) disconnected elements or unmerged nodes that create floating, independent parts; and (4) missing material or geometric properties (e.g., zero Young's modulus or zero area) yielding zero-stiffness entries.
 ]
 
 == Exercise 4.5.8
@@ -206,7 +242,7 @@ Give four common modeling or formulation errors that can lead to a singular stif
 Why may excessively large penalty parameters create numerical difficulties even though they enforce constraints more strongly?
 
 #sol[
-  asdf
+Excessively large penalty parameters introduce values into the global stiffness matrix that are many orders of magnitude larger than the actual physical stiffness terms of the elements. This massive disparity causes severe ill-conditioning; during the matrix solution process, floating-point arithmetic limits cause the smaller, genuine physical stiffness data to be truncated or lost entirely, leading to numerical instability and highly inaccurate results.
 ]
 
 == Exercise 4.6.1

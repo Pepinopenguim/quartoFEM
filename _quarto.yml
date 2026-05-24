@@ -11,6 +11,7 @@ book:
     - cp4-2.qmd
     - cp4-3.qmd
     - cp4-4.qmd
+    - cp4-6.qmd
 
 
 engine: julia
