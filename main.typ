@@ -86,3 +86,61 @@
 
 // ====================================================================================================
 
+The equivalent vertical nodal-force vector is
+$
+bold(F)_v = t integral_(A') bold(N)^T b_v J d eta d xi 
+$
+
+Since the Area is A, the Jacobian will be 
+
+$
+  J = (A)/(4)
+$
+
+=== (a)
+
+The shape function for a 4-node square element will be
+
+$
+  N_i = 1/4(1 + xi_i xi)(1 + eta_i eta)
+$
+
+Thus
+
+$
+  bold(F)_v = - (gamma t A)/16 integral_(-1)^(1) integral_(-1)^(1) mat(
+    (1 - xi)(1 - eta);
+    (1 + xi)(1 - eta);
+    (1 + xi)(1 + eta);
+    (1 - xi)(1 + eta);
+  )
+  d xi
+  d eta
+$
+
+Note that
+
+$
+  integral_(-1)^1 (1 plus.minus x) d x = 2
+$
+
+$
+  bold(F)_v = - (gamma t A)/16
+  mat(
+    4;4;4;4
+  )
+  =
+  - (gamma t A)/4
+  mat(
+    1;1;1;1
+  )
+$
+
+
+easdifhjaspdivaiopg 
+
+$
+  sigma_x
+  =
+  
+$
