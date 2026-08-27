@@ -595,17 +595,22 @@
       )
     )
 
-    #let literal_b = range(3).map(
-      i => range(3).map(
-        j => $
-              #(leci-vita-arr.at(i).at(j))
-              dot
-              a_#i
-              dot
-              a_#j
-             $
-      )
-    )
+    #let literal_b = range(1, 4).map(k => {
+      let terms = ()
+      // Sum over dummy indices i and j
+      for i in range(1, 4) {
+        for j in range(1, 4) {
+          let val = leci-vita((i, j, k))
+          if val != 0 {
+            // Format the sign and the variables
+            let sign = if val == 1 { $+$ } else { $-$ }
+            terms.push($#sign a_#i a_#j$)
+          }
+        }
+      }
+      terms.join() 
+    })
+
     *By brute force...*
 
     Let $A_(i j) = a_i a_j$
@@ -615,9 +620,29 @@
       dot
       #array2mat(literal_a)
       =
-      #literal_b
+      #vec2mat(literal_b)
+      =
+      #vec2mat((0,0,0))
     $
 
+    *By triviality*
+
+    Multiplying both sides by the cartesian basis vector:
+
+    $
+      epsilon.alt_(i j k) a_i a_j dot bold(hat(e))_i = 0 dot bold(hat(e))_i = 0
+    $
+
+    The expression above is the cross product of the vector $bold(a)$.
+
+    $
+      epsilon.alt_(i j k) a_i a_j dot bold(hat(e))_i 
+      =
+      bold(a)
+      times
+      bold(a)
+    $
+    By definition, the cross product of a vector by itself is 0, since they are colinear.
   ]
 )
 
@@ -641,3 +666,29 @@
   ]
 )
 
+#cell(
+  "Problem 3.5.?",
+  [
+    Considering that $s_(i j) = sigma_(i j) - 1/3 sigma_(k k)delta_(i j)$. Calculate
+    $
+      #partial_frac($bold(s)$, $bold(sigma)$)
+    $
+  ],
+  [
+    $
+      #partial_frac($bold(s)$, $bold(sigma)$)
+      =
+      #partial_frac($$, $sigma_(k l)$)
+      (sigma_(i j) - 1/3 I_1 delta_(i j))
+      =
+      delta_(i k) delta_(j l) - 1/3 #partial_frac($I_1$, $sigma_(k l)$) delta_(i j)
+      =
+      delta_(i k) delta_(j l) - 1/3 delta_(i j) delta_(k l)
+    $
+    $
+      #partial_frac($bold(s)$, $bold(sigma)$)
+      =
+      bold(II) - 1/3 bold(I) times.o bold(I)
+    $
+  ]
+)
