@@ -1,5 +1,7 @@
 #let round(v, digits: 3) = calc.round(v, digits: digits)
 
+#let partial_frac(a, b) = $(partial #a) / (partial #b)$
+
 #let vec2mat(vec, transpose: false) = {
   if transpose {
     math.mat(
@@ -16,6 +18,12 @@
 #let array2mat(array) = {
   math.mat(
     ..array.map(row => row.map(x => x))
+  )
+}
+
+#let array3mat(array) = {
+  math.mat(
+    ..array.map(mat => array2mat(mat))
   )
 }
 
@@ -69,4 +77,37 @@
     ],
     ..args,
   )
+}
+
+#let leci-vita(a) = {
+  if a.len() != 3 {
+    return // error!, return null
+  }
+
+  // check if any is equal
+  if (
+    a.at(0) == a.at(1) or
+    a.at(0) == a.at(2) or
+    a.at(1) == a.at(2)
+  ) {
+    return 0
+  }
+
+  // count inversions
+  let inversions = 0
+  if a.at(0) > a.at(1) {
+    inversions += 1 
+  }
+  if a.at(0) > a.at(2) {
+    inversions += 1 
+  }
+  if a.at(1) > a.at(2) {
+    inversions += 1 
+  }
+
+  if (calc.rem(inversions, 2) == 1) {
+    return -1
+  } else {
+    return 1
+  }
 }

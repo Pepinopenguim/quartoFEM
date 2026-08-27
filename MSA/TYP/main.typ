@@ -407,9 +407,237 @@
       dot
       array2mat(#I)^T
       =
+      1 dot 1 + 1 dot 1 + 1 dot 1
+      =
       #result
     $
-    #literal
 
   ]
 )
+
+#cell(
+  "Problem 1.2.2",
+  [
+    Find the expression in index notation for
+
+    $
+      #partial_frac(
+        $bold(v)$,
+        $bold(v)$
+      )
+    $
+
+    where $bold(v)$ is a vector.
+  ],
+  [
+    #let literal = ()
+
+    #for i in range(1,4) {
+      let arr = ()
+      for j in range(1,4) {
+        arr.push(
+          partial_frac(
+            $v_#i$,
+            $v_#j$,
+          )
+        )
+      }
+      literal.push(arr)
+    }
+    $
+      bold(A)
+      =
+      #partial_frac(
+        $bold(v)$,
+        $bold(v)$
+      )
+      =
+      #array2mat(
+        literal
+      )
+      ->
+      A_(i j)
+      =
+      #partial_frac(
+        $v_i$,
+        $v_j$
+      )
+    $
+
+    It is known that
+
+    $
+      #partial_frac(
+        $v_l$,
+        $v_m$
+      )
+      =
+      cases(
+        1 "if" l = m,
+        0 "else"
+      )
+    $
+    Then it is safe to assume that
+
+    $
+      #partial_frac(
+        $v_i$,
+        $v_j$
+      )
+      =
+      delta_(i j)
+    $
+  ]
+)
+
+#cell(
+  "Problem 1.2.3",
+  [
+    With the aid of the Kronecker delta, find the expression in index notation for the trace of $bold(a) bold(b)^T$  where $bold(a)$ and $bold(b)$ are vectors.
+  ],
+  [
+    $
+      alpha
+      =
+      "trace"(bold(a) bold(b)^T)
+      =
+      a_i b_j delta_(i j)
+    $
+
+    With the contraction property
+
+    $
+      b_j delta_(i j) = b_i
+    $
+
+    $
+      alpha = a_i dot b_i = bold(a) dot bold(b)
+    $
+  ]
+)
+
+#cell(
+  "Problem 1.2.4",
+  [
+    Simplify the expression 
+
+    $
+      (partial ^2) / (partial x_i partial x_j) (x_i x_j)
+    $
+  ],
+  [
+    $
+      (partial ^2) / (partial x_i partial x_j) (x_i x_j)
+      =
+      #partial_frac(
+        $$,
+        $x_i$,
+      ) (
+        #partial_frac(
+          $x_i$,
+          $x_j$
+        ) x_j
+        +
+        #partial_frac(
+          $x_j$,
+          $x_j$
+        ) x_i
+      )
+      =
+    $
+
+    $
+      =
+      #partial_frac(
+        $$,
+        $x_i$,
+      ) (
+        0 + delta_(j j) x_i
+      )
+      =
+      3
+      #partial_frac(
+        $$,
+        $x_i$,
+      ) (
+        x_i
+      )
+      =
+      3 delta_(i i)
+      =
+      9
+    $
+  ]
+)
+
+#let leci-vita-arr = range(1,4).map(
+  i => range(1,4).map(
+    j => range(1,4).map(
+      k => leci-vita((i, j, k))
+    )
+  )
+)
+
+
+#cell(
+  "Problem 1.3.1",
+  [
+    Show that
+
+    $
+      epsilon.alt_(i j k) a_i a_j = 0
+    $
+  ],
+  [
+    #let literal_a = range(1,4).map(
+      i => range(1,4).map(
+        j => $a_#i a_#j$
+      )
+    )
+
+    #let literal_b = range(3).map(
+      i => range(3).map(
+        j => $
+              #(leci-vita-arr.at(i).at(j))
+              dot
+              a_#i
+              dot
+              a_#j
+             $
+      )
+    )
+    *By brute force...*
+
+    Let $A_(i j) = a_i a_j$
+
+    $
+      #array3mat(leci-vita-arr)
+      dot
+      #array2mat(literal_a)
+      =
+      #literal_b
+    $
+
+  ]
+)
+
+#cell(
+  "Problem 1.3.2",
+  [
+
+  ],
+  [
+    
+  ]
+)
+
+#cell(
+  "Problem 1.3.3",
+  [
+
+  ],
+  [
+    
+  ]
+)
+
