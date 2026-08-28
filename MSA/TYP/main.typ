@@ -876,33 +876,85 @@
     (A_(i j) - A_(k k) delta_(i j))
     &= delta_(i m) delta_(j n) - 1/3 delta_(i j) delta_(k m) delta_(k n) \
     &= delta_(i m) delta_(j n) -  1/3 delta_(i j) delta_(m n) \
+    &= II_(i j m n) - 1/3 delta_(i j) delta_(m n)\
     &-> bold(bb(I)) - 1/3 bold(I) times.o bold(I)
   $
 ])
 
+#let problem_a = [
+  *a)* $bold(I) :bold(I) = 3$
+
+  Since $bold(A):bold(B) -> A_(i j) B_(i j)$, then our solution is:
+
+  $
+    alpha &= delta_(i j) delta_(i j) \
+    &= delta_(i i)\ &= 3
+  $
+]
+
+#let problem_b = [
+  *b)* $bold(II) : bold(II) = 3 bold(I)$
+  
+  By definition, $II_(i j k l) = delta_(i k) delta_(j l)$. Thus
+
+  $
+    II_(i j k l) II_(k l m n) &=
+    (delta_(i k)delta_(j l))(delta_(k m)delta_(l n)) \
+    &= delta_(i m) delta_(j n) \
+    &= II
+  $
+
+]
+
+#let problem_c = [
+  *c)* $bold(II)^"sym" : bold(II)^"sym" = bold(II)^"sym"$
+
+  $
+    II^"sym"_(i j m n) II^"sym"_(m n k l) 
+    &= 1/2(
+      delta_(i m)delta_(j n)
+      + 
+      delta_(i n)delta_(j m)
+    ) 
+    dot 
+    1/2(
+      delta_(m k)delta_(n l)
+      +
+      delta_(m l)delta_(n k)
+    )  \
+    &= 1/4(
+      delta_(i m)delta_(j n)delta_(m k)delta_(n l)
+      +
+      delta_(i m)delta_(j n)delta_(m l)delta_(n k)
+      +
+      delta_(i n)delta_(j m)delta_(m k)delta_(n l)
+      +
+      delta_(i n)delta_(j m)delta_(m l)delta_(n k)
+    )  \
+    &= 1/4(
+      delta_(i k)delta_(j l)
+      +
+      delta_(i l)delta_(j k)
+      +
+      delta_(i l)delta_(j k)
+      +
+      delta_(i k)delta_(j l)
+    ) \
+    &= 1/2(
+      delta_(i k)delta_(j l)
+      +
+      delta_(i l)delta_(j k)
+    ) \
+    &=II^"sym"_(i j k l)
+  $
+]
+
 #cell(
-  "Problem 3.5.?",
-  [
-    Considering that $s_(i j) = sigma_(i j) - 1/3 sigma_(k k)delta_(i j)$. Calculate
-    $
-      #partial_frac($bold(s)$, $bold(sigma)$)
-    $
-  ],
-  [
-    $
-      #partial_frac($bold(s)$, $bold(sigma)$)
-      =
-      #partial_frac($$, $sigma_(k l)$)
-      (sigma_(i j) - 1/3 I_1 delta_(i j))
-      =
-      delta_(i k) delta_(j l) - 1/3 #partial_frac($I_1$, $sigma_(k l)$) delta_(i j)
-      =
-      delta_(i k) delta_(j l) - 1/3 delta_(i j) delta_(k l)
-    $
-    $
-      #partial_frac($bold(s)$, $bold(sigma)$)
-      =
-      bold(II) - 1/3 bold(I) times.o bold(I)
-    $
+  "Problem 1.5.1",[
+    Using index notation, show that
+  ],[
+    #problem_a
+    #problem_b
+    #problem_c
   ]
 )
