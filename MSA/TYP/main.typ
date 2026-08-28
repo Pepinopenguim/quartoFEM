@@ -649,22 +649,152 @@
 #cell(
   "Problem 1.3.2",
   [
+    Prove de identity
 
+    $
+      epsilon.alt_(i j k) epsilon.alt_(m n k) = delta_(i m)delta_(j n) - delta_(i n) delta_(j m)
+    $
   ],
   [
+    $
+      epsilon.alt_(i j k) epsilon.alt_(m n k)
+    $
     
+    The product of two Levi-Civita tensors can be written as the determinant of a $3 times 3$ matrix of Kronecker deltas:
+
+    $
+      epsilon.alt_(i j k) epsilon.alt_(m n p) = det mat(
+        delta_(i m), delta_(i n), delta_(i p);
+        delta_(j m), delta_(j n), delta_(j p);
+        delta_(k m), delta_(k n), delta_(k p)
+      )
+    $
+
+    We aim to solve the specific case where $p = k$:
+
+    $
+      epsilon.alt_(i j k) epsilon.alt_(m n k) = det mat(
+        delta_(i m), delta_(i n), delta_(i k);
+        delta_(j m), delta_(j n), delta_(j k);
+        delta_(k m), delta_(k n), delta_(k k)
+      )
+    $
+
+    Expanding the determinant along the bottom row, and knowing that $delta_(k k) = 3$ and $delta_(i k) delta_(k m) = delta_(i m)$, the matrix simplifies directly to the identity:
+
+    $
+      epsilon.alt_(i j k) epsilon.alt_(m n k) 
+      &= det mat(
+        delta_(i m), delta_(i n);
+        delta_(j m), delta_(j n)
+      ) \
+      &= delta_(i m) delta_(j n) - delta_(i n) delta_(j m)
+    $
+
   ]
 )
 
 #cell(
   "Problem 1.3.3",
   [
+    Using the permutation operator, prove the vector triple product identity
 
+    $
+      bold(a) times (bold(b) times bold(c)) = bold(b)(bold(a) dot bold(c)) - bold(c)(bold(a) dot bold(b))
+    $
   ],
   [
+    Let $bold(r)$ be the result vector.
+    $
+      bold(r) = bold(a) times (bold(b) times bold(c))
+      ->
+      r_i = epsilon.alt_(i j k) a_j d_k  
+    $
+
+    For $d_k = epsilon.alt_(k m n) b_m c_n$
+
+    Therefore
+    $
+      r_i = epsilon.alt_(i j k) a_j epsilon.alt_(k m n) b_m c_n 
+    $
+
+    From the property obtained from the last problem, and the fact that $epsilon.alt_(k m n) = epsilon.alt_(m n k)$,we know that:
+
+    $
+      epsilon.alt_(i j k) epsilon.alt_(m n k) = delta_(i m)delta_(j n) - delta_(i n) delta_(j m)
+    $
+
+    $
+      r_i &= (delta_(i m)delta_(j n) - delta_(i n) delta_(j m)) a_j b_m c_n \
+          &= a_j b_m c_n delta_(i m)delta_(j n) - a_j b_m c_n delta_(i n) delta_(j m) \
+          &= b_i (a_j c_j) - c_i (a_j b_j)
+    $
     
+    Translating the scalar components back to vector notation, where $(a_j c_j) = (bold(a) dot bold(c))$:
+
+    $
+      bold(r) = bold(b)(bold(a) dot bold(c)) - bold(c)(bold(a) dot bold(b))
+    $
   ]
 )
+
+#cell("Problem 1.4.1", [
+  Given two vectors $bold(a)$ and $bold(b)$, show that
+
+  $
+  (bold(a) times.o bold(a))
+  (bold(b) times.o bold(b))
+  =
+  (bold(a) dot bold(b))bold(a) times.o bold(b)
+  $
+], [
+  Let the tensor $bold(R)$ be the result.
+  $
+  bold(R)
+  =
+  (bold(a) times.o bold(a))
+  (bold(b) times.o bold(b))
+  ->
+  R_(i j)
+  &=
+  a_i a_k b_k b_j \
+  &=
+  (a_k b_k) a_i b_j \
+  $
+  $
+  R_(i j) = 
+  (a_k b_k) a_i b_j ->
+  bold(R) = (bold(a) dot bold(b)) dot bold(a) times.o bold(b)
+  $
+])
+#cell("Problem 1.4.2", [
+  Find the abstract expression for 
+  $
+    #partial_frac($$, $bold(v)$) (bold(v) dot bold(v))
+  $
+], [
+  $
+    #partial_frac($$, $bold(v)$) (bold(v) dot bold(v)) -> 
+    #partial_frac($$, $bold(v)_j$) (v_i v_i)
+    &=
+    2 #partial_frac($v_i$, $bold(v)_j$) v_i \
+    &=
+    2 delta_(i j) v_i \
+    &= 2 v_j
+
+  $
+
+  Therefore
+
+  $
+    #partial_frac($$, $bold(v)$) (bold(v) dot bold(v))
+    =
+    2 bold(v)
+  $
+])
+#cell("Problem 1.4.3", [], [])
+#cell("Problem 1.4.4", [], [])
+#cell("Problem 1.4.5", [], [])
 
 #cell(
   "Problem 3.5.?",
