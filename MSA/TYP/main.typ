@@ -792,9 +792,93 @@
     2 bold(v)
   $
 ])
-#cell("Problem 1.4.3", [], [])
-#cell("Problem 1.4.4", [], [])
-#cell("Problem 1.4.5", [], [])
+#cell("Problem 1.4.3", [
+  Given two second-order tensor $bold(A)$ and $bold(B)$, show that
+
+  $
+    #partial_frac($$,$bold(A)$) (bold(A) : bold(B)) = bold(B)
+  $
+], [
+  In index notation:
+
+  $
+    #partial_frac($$,$bold(A)$) (bold(A) : bold(B)) -> 
+    #partial_frac($$,$A_(i j)$) (A_(m n) B_(m n)) 
+  $
+  $
+    #partial_frac($$,$A_(i j)$) (A_(m n) B_(m n)) 
+    &= #partial_frac($A_(m n)$, $A_(i j)$) B_(m n)
+    +
+    #partial_frac($B_(m n)$, $A_(i j)$) A_(m n) \
+    &= delta_(m i) delta_(n j) B_(m n) \
+    &= B_(i j) \ &-> bold(B)
+  $
+  
+])
+#cell("Problem 1.4.4", [
+  Find the expression for 
+
+  $
+    #partial_frac(
+      $$,
+      $bold(a)$,
+    )
+    (bold(a) times bold(b))
+  $
+], [
+  In index notation,
+
+  $
+    #partial_frac(
+      $$,
+      $bold(a)$,
+    )
+    (bold(a) times bold(b))
+    ->
+    #partial_frac(
+      $$,
+      $a_l$,
+    )
+    (
+      epsilon.alt_(i j k)
+      a_j
+      b_k
+    ) 
+    &=
+      epsilon.alt_(i j k)
+      b_k
+      delta_(j l) \
+    &=
+      epsilon.alt_(i l k)
+      b_k
+    &=
+      - epsilon.alt_(i k j)
+      b_k
+  $
+])
+#cell("Problem 1.4.5", [
+  Compute the derivative, with respect to $bold(A)$, of 
+
+  $
+    bold(A) - 1/3 "trace"(bold(A))bold(I)
+  $
+], [
+  $
+    1/3
+    #partial_frac(
+      $
+        
+      $,
+      $
+        A_(m n)
+      $
+    )
+    (A_(i j) - A_(k k) delta_(i j))
+    &= delta_(i m) delta_(j n) - 1/3 delta_(i j) delta_(k m) delta_(k n) \
+    &= delta_(i m) delta_(j n) -  1/3 delta_(i j) delta_(m n) \
+    &-> bold(bb(I)) - 1/3 bold(I) times.o bold(I)
+  $
+])
 
 #cell(
   "Problem 3.5.?",
