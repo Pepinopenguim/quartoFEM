@@ -12,7 +12,7 @@
 
 // Call the function
 #poster-content(
-  dx: 11.5cm, // Adjust to fit inside the template's borders
+  dx: 5.5cm, // Adjust to fit inside the template's borders
   dy: 20.5cm, 
   debug: true, // Turn to false before final print!
   title: [Seu Título Aqui],
