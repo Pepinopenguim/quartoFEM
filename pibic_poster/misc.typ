@@ -15,6 +15,7 @@
   
   // Default body text size (Typst defaults to 11pt which is too small for a poster. 
   // ~36pt is standard for a 90x120 poster body)
+  v(1cm)
   set text(size: 36pt) 
   
   // Debug box color
