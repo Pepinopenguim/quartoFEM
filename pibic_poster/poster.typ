@@ -77,7 +77,7 @@
 #poster-content(
   dx: 5.5cm, // Adjust to fit inside the template's borders
   dy: 20.5cm, 
-  debug: false, // Turn to false before final print!
+  debug: true, // Turn to false before final print!
   title: [Desenvolvimento de Módulos de Dimensionamento de Elementos Estruturais em Concreto Armado com uso de Dart],
   authors: [Vítor Luís Azevedo, Marcos Honorato de Oliveira],
   department: [Departamento de Engenharia Civil - UnB]
@@ -101,7 +101,13 @@
   
 
   = Metodologia
-  #lorem(25)
+  - Arquitetura Monolítica: Desenvolvido integralmente em Dart/Flutter.
+
+  *O Motor de Empacotamento Iterativo:*
+  1. Calcula a área de aço teórica e testa subconjuntos de bitolas comerciais.
+  2. Empacota fisicamente as barras, garantindo espaçamento horizontal e cobrimento.
+  3. Distribui em camadas verticais e recalcula a altura útil efetiva da seção.
+  4. Filtra e ordena as soluções viáveis segundo as preferências do usuário.
 
   #figure(
     flowchart-diagram

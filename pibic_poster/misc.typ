@@ -38,7 +38,7 @@
           #text(size: 36pt, department)
         ]
         
-        #v(80pt)
+        #v(30pt)
 
         // Two Column Layout for the body
         #columns(2, gutter: 4cm)[
